@@ -7,7 +7,7 @@ RESOURCE_DIR = src/main/resources
 
 all: jni-header package
 
-deploy:
+deploy: setversion
 	mvn package deploy -DperformRelease=true --settings settings.xml
 
 MVN:=mvn
@@ -49,7 +49,10 @@ $(TARGET)/common-lib/NativeDB.h: src/main/java/org/sqlite/core/NativeDB.java
 	$(JAVAC) -d $(TARGET)/common-lib -sourcepath $(SRC) -h $(TARGET)/common-lib src/main/java/org/sqlite/core/NativeDB.java
 	mv target/common-lib/org_sqlite_core_NativeDB.h target/common-lib/NativeDB.h
 
-test:
+setversion:
+	$(MVN) versions:set -DnewVersion=$(artifactVersion)
+
+test: setversion
 	$(MVN) test
 
 clean: clean-target clean-native clean-java clean-tests
@@ -67,7 +70,6 @@ $(SQLITE_OUT)/sqlite3.o : $(SQLITE_UNPACKED)
 	$(CC) -v
 
 	$(CC) -o $@ -c $(CCFLAGS) \
-		-DHAS_AES_HARDWARE=0 \
         -DCODEC_TYPE=CODEC_TYPE_CHACHA20 \
         -DSQLITE_THREADSAFE=1 \
         -DSQLITE_DQS=0 \
@@ -149,7 +151,7 @@ linux64: $(SQLITE_UNPACKED) jni-header
 	docker run $(DOCKER_RUN_OPTS) -ti -v $$PWD:/work gillena/sqlite-build-env bash -c 'make clean-native native OS_NAME=Linux OS_ARCH=x86_64'
 
 alpine-linux64: $(SQLITE_UNPACKED) jni-header
-	docker run $(DOCKER_RUN_OPTS) -ti -v $$PWD:/work xerial/alpine-linux-x86_64 bash -c 'make clean-native native OS_NAME=Linux OS_ARCH=x86_64'
+	docker run $(DOCKER_RUN_OPTS) -ti -v $$PWD:/work xerial/alpine-linux-x86_64 bash -c 'make clean-native native OS_NAME=Linux-Alpine OS_ARCH=x86_64'
 
 linux-arm: $(SQLITE_UNPACKED) jni-header
 	./docker/dockcross-armv5 -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=/usr/xcc/armv5-unknown-linux-gnueabi/bin/armv5-unknown-linux-gnueabi- OS_NAME=Linux OS_ARCH=arm'
@@ -195,7 +197,7 @@ clean-tests:
 	rm -rf $(TARGET)/{surefire*,testdb.jar*}
 
 clean-target:
-	rm -rf $(TARGET)
+	rm -rf $(TARGET)/*
 
 docker-linux64:
 	docker build -f docker/Dockerfile.linux_x86_64 -t xerial/centos5-linux-x86_64 .
