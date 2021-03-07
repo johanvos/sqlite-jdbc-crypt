@@ -17,13 +17,40 @@ Prerequisites
 Build
 -----
 
-1.	Edit the `VERSION` file and set the SQLite version to use corresponding to one of the github tags of https://github.com/Willena/libsqlite3-wx-see.git ( current is 3.x.x )
-2.	Edit the version number in `pom.xml` to match `VERSION`.
-3.	Then, run:
+1.	Edit the `VERSION` file and set the SQLite version to use as available on https://github.com/utelle/SQLite3MultipleCiphers/releases (use base SQLite3 version not the SQLiteMC version). Update the artifact version you want to produce accordingly.
+2.	Then, run:
 
 	```
 	$ make
 	```
+	
+How to build only the native library for your system (without cross-compilation)
+====================================================
+
+1. SQLite version to use should be set in the `VERSION` file
+2. Run `make native`
+3. It will produce shared library files in the `target` folder
+
+How to build all native libraries (cross-compilation)
+=====================================================
+
+1. Set the SQLite version in the `VERSION` file
+2. Run `make native-all` (this step will use docker to cross-compile)
+3. It will produce shared library files in the `target` folder
+
+How to build a native library for a single target (armv5 for example)
+=====================================================================
+
+1. Set the SQLite version in the `VERSION` file
+2. Run `make linux-armv5` (this step will use docker to cross-compile)
+3. It will produce th armv5 shared library file in the `target` folder
+
+How to build final jars
+=======================
+
+1. Set the SQLite version in the `VERSION` file
+2. Run `make native-all package test`
+3. Get the final jar in the  `target` directory.
 
 How to build pure-java library
 ==============================
