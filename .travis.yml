@@ -26,12 +26,10 @@ before_install:
   - sudo update-alternatives --set c++ /usr/bin/g++
   - sudo update-alternatives --set g++ "/usr/bin/g++-5"
   - sudo update-alternatives --set gcc "/usr/bin/gcc-5"
+  - sudo apt-get install -y zip
   - gcc -v
 before_deploy:
   - echo "Now deploying things !"
-  - git config --local user.name "Villena Guillaume"
-  - git config --local user.email "guiguivil@gmail.com"
-  - sudo apt-get install -y zip
   - source VERSION
   - zip -r ./sqlite-natives-$version.zip ./src/main/resources/org/sqlite/native
   - make deploy
