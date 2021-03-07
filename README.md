@@ -104,7 +104,7 @@ To use another directory, set `org.sqlite.tmpdir` JVM property to your favorite 
 
 ### Build from scratch
 
-        Comming soon !
+See [README_BUILD.md](./README_BUILD.md) file
         
 ## Usage and examples
 ### Basic usage
