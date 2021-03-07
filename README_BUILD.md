@@ -23,7 +23,19 @@ Build
 	```
 	$ make
 	```
-	
+
+How to build without having to rebuild native libraries
+========================================================
+
+Starting with version 3.34.0 native binaries are not included anymore in the source tree of the project. Instead, they are available as a zip in the release page. 
+For each release, the CI will produce this zip containing binaries for most OS and plateforms.
+
+1. SQLite version to use should be set in the `VERSION` file
+2. Download the corresponding zip file in the release page
+3. Extract the zip to the root of the project
+4. Check that binaries have been placed in src/main/resources/org/sqlite/native
+5. Build using `mvn`: `mvn install`
+
 How to build only the native library for your system (without cross-compilation)
 ====================================================
 
