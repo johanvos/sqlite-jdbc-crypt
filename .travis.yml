@@ -11,10 +11,11 @@ jdk:
 jobs:
   include:
     - name: build
+      if: branch != develop && branch != master
       script: make
     - name: deploy-snapshot
-      if: branch = develop
-      script: make deploy
+      if: branch = develop || branch = master
+      script: make all deploy
         
 install:
   - mkdir -p /tmp/willena/
