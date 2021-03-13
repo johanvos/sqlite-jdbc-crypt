@@ -7,7 +7,7 @@ RESOURCE_DIR = src/main/resources
 
 all: jni-header package
 
-deploy:
+deploy: setversion
 	mvn package deploy -DperformRelease=true --settings settings.xml
 
 MVN:=mvn
@@ -49,7 +49,10 @@ $(TARGET)/common-lib/NativeDB.h: src/main/java/org/sqlite/core/NativeDB.java
 	$(JAVAC) -d $(TARGET)/common-lib -sourcepath $(SRC) -h $(TARGET)/common-lib src/main/java/org/sqlite/core/NativeDB.java
 	mv target/common-lib/org_sqlite_core_NativeDB.h target/common-lib/NativeDB.h
 
-test:
+setversion:
+	$(MVN) versions:set -DnewVersion=$(artifactVersion)
+
+test: setversion
 	$(MVN) test
 
 clean: clean-target clean-native clean-java clean-tests
@@ -194,7 +197,7 @@ clean-tests:
 	rm -rf $(TARGET)/{surefire*,testdb.jar*}
 
 clean-target:
-	rm -rf $(TARGET)
+	rm -rf $(TARGET)/*
 
 docker-linux64:
 	docker build -f docker/Dockerfile.linux_x86_64 -t xerial/centos5-linux-x86_64 .
