@@ -11,8 +11,8 @@ jdk:
 jobs:
   include:
     - name: build
-      if: branch != develop && branch != master
-      script: make
+      if: branch != develop
+      script: make all
     - name: deploy-snapshot
       if: branch = develop
       script: make all deploy
