@@ -70,7 +70,7 @@ public class SQLiteMCSqlCipherConfig extends SQLiteMCConfig.Builder {
   }
 
   public static SQLiteMCSqlCipherConfig getDefault() {
-    return getV4Defaults();
+    return new SQLiteMCSqlCipherConfig();
   }
 
   public static SQLiteMCSqlCipherConfig getV1Defaults() {
@@ -120,7 +120,7 @@ public class SQLiteMCSqlCipherConfig extends SQLiteMCConfig.Builder {
     config.setHmacUse(true);
     config.setHmacPgno(HmacPgno.LITTLE_ENDIAN);
     config.setHmacSaltMask(0x3a);
-    config.setLegacy(0);
+    config.setLegacy(4);
     config.setLegacyPageSize(4096);
     config.setKdfAlgorithm(KdfAlgorithm.SHA512);
     config.setHmacAlgorithm(HmacAlgorithm.SHA512);
