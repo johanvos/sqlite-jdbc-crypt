@@ -62,9 +62,13 @@ public abstract class SQLiteConnection
     public SQLiteConnection(String url, String fileName, Properties prop) throws SQLException {
         this.db = open(url, fileName, prop);
         SQLiteConfig config = db.getConfig();
-        this.connectionConfig = db.getConfig().newConnectionConfig();
-
-        config.apply(this);
+        this.connectionConfig = config.newConnectionConfig();
+        try {
+            config.apply(this);
+        } catch (SQLException throwable) {
+            this.db.close();
+            throw throwable;
+        }
     }
 
     public SQLiteConnectionConfig getConnectionConfig() {
