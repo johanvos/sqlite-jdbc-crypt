@@ -43,7 +43,7 @@ before_deploy:
   - git config --local user.email "guiguivil@gmail.com"
   - sudo apt-get install -y zip
   - source VERSION
-  - zip -r ./sqlite-natives-$version.zip ./src/main/resources/org/sqlite/native
+  - zip -r ./sqlite-natives-$artifactVersion.zip ./src/main/resources/org/sqlite/native
   - make deploy
 addons:
   apt:
@@ -58,13 +58,13 @@ deploy:
   overwrite: true
   file_glob: true
   file:
-    - "/home/travis/build/Willena/sqlite-jdbc-crypt/target/sqlite-jdbc-$version.jar"
-    - "/home/travis/build/Willena/sqlite-jdbc-crypt/target/sqlite-jdbc-$version-javadoc.jar"
-    - "/home/travis/build/Willena/sqlite-jdbc-crypt/target/sqlite-jdbc-$version-sources.jar"
-    - "/home/travis/build/Willena/sqlite-jdbc-crypt/target/sqlite-jdbc-$version.jar.asc"
-    - "/home/travis/build/Willena/sqlite-jdbc-crypt/target/sqlite-jdbc-$version-javadoc.jar.asc"
-    - "/home/travis/build/Willena/sqlite-jdbc-crypt/target/sqlite-jdbc-$version-sources.jar.asc"
-    - "/home/travis/build/Willena/sqlite-jdbc-crypt/sqlite-natives-$version.zip"
+    - "/home/travis/build/Willena/sqlite-jdbc-crypt/target/sqlite-jdbc-$artifactVersion.jar"
+    - "/home/travis/build/Willena/sqlite-jdbc-crypt/target/sqlite-jdbc-$artifactVersion-javadoc.jar"
+    - "/home/travis/build/Willena/sqlite-jdbc-crypt/target/sqlite-jdbc-$artifactVersion-sources.jar"
+    - "/home/travis/build/Willena/sqlite-jdbc-crypt/target/sqlite-jdbc-$artifactVersion.jar.asc"
+    - "/home/travis/build/Willena/sqlite-jdbc-crypt/target/sqlite-jdbc-$artifactVersion-javadoc.jar.asc"
+    - "/home/travis/build/Willena/sqlite-jdbc-crypt/target/sqlite-jdbc-$artifactVersion-sources.jar.asc"
+    - "/home/travis/build/Willena/sqlite-jdbc-crypt/sqlite-natives-$artifactVersion.zip"
 
   skip_cleanup: true
   name: SQLite-jdbc-$version
