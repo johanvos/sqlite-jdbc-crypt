@@ -223,5 +223,19 @@ public class SQLiteMCPragmaTest {
 //        c.close();
     }
 
+    @Test
+    public void closeDeleteTest() throws IOException, SQLException {
+        String dbfile = createFile();
+        String key = "key";
+        cipherDatabaseCreate(new SQLiteMCConfig(), dbfile, key);
+
+        Connection c = cipherDatabaseOpen(new SQLiteMCConfig(), dbfile, key);
+        assertTrue("Should be able to read the base db", databaseIsReadable(c));
+        c.close();
+
+        c = cipherDatabaseOpen(SQLiteMCRC4Config.getDefault(), dbfile, key);
+        assertNull("Should not be readable with RC4", c);
+        assertTrue("Connection must be closed, should be deleted", new File(dbfile).delete());
+    }
 
 }
