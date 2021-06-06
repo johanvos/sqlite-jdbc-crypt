@@ -65,9 +65,14 @@ public abstract class SQLiteConnection
         this.connectionConfig = config.newConnectionConfig();
         try {
             config.apply(this);
-        } catch (SQLException throwable) {
-            this.db.close();
-            throw throwable;
+        } catch (SQLException openException) {
+            try {
+                this.db.close();
+            } catch (SQLException closeException) {
+                // That may happen because there could be a misconfiguration.
+                // The original exception should be thrown to help people debugging.
+            }
+            throw openException;
         }
     }
 
