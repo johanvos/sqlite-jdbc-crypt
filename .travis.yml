@@ -15,7 +15,9 @@ jobs:
       script: make all
     - name: deploy-snapshot
       if: branch = develop
-      script: make all deploy
+      script:
+      - sed -i -re 's/artifactVersion=(.*)$/artifactVersion=\1-SNAPSHOT/gm' VERSION
+      - make all deploy
         
 install:
   - mkdir -p /tmp/willena/
