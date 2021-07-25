@@ -1092,6 +1092,6 @@ public class SQLiteConfig {
     }
 
     public int getBusyTimeout() {
-        return parseLimitPragma(Pragma.BUSY_TIMEOUT, "3000");
+        return parseLimitPragma(Pragma.BUSY_TIMEOUT, 3000);
     }
 }

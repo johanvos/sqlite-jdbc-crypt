@@ -14,12 +14,11 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.Properties;
 
-import junit.framework.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class JDBCTest
-{
+import static org.junit.Assert.assertNull;
+
+public class JDBCTest {
     @Test
     public void enableLoadExtensionTest() throws Exception {
         Properties prop = new Properties();
@@ -39,8 +38,7 @@ public class JDBCTest
             //            ResultSet rs = stat.executeQuery("select sqrt(4)");
             //            System.out.println(rs.getDouble(1));
 
-        }
-        finally {
+        } finally {
             if (conn != null)
                 conn.close();
         }
@@ -54,7 +52,7 @@ public class JDBCTest
 
     @Test
     public void shouldReturnNullIfProtocolUnhandled() throws Exception {
-        Assert.assertNull(JDBC.createConnection("jdbc:anotherpopulardatabaseprotocol:", null));
+        assertNull(JDBC.createConnection("jdbc:anotherpopulardatabaseprotocol:", null));
     }
 
 }
