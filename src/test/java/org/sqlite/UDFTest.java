@@ -1,6 +1,8 @@
 package org.sqlite;
 
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,28 +13,28 @@ import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Tests User Defined Functions. */
-public class UDFTest
-{
-    private static int    val        = 0;
-    private static byte[] b1         = new byte[] { 2, 5, -4, 8, -1, 3, -5 };
-    private static int    gotTrigger = 0;
+/**
+ * Tests User Defined Functions.
+ */
+public class UDFTest {
+    private static int val = 0;
+    private static final byte[] b1 = new byte[] {2, 5, -4, 8, -1, 3, -5};
+    private static int gotTrigger = 0;
 
-    private Connection    conn;
-    private Statement     stat;
+    private Connection conn;
+    private Statement stat;
 
-    @Before
+    @BeforeEach
     public void connect() throws Exception {
         conn = DriverManager.getConnection("jdbc:sqlite:");
         stat = conn.createStatement();
     }
 
-    @After
+    @AfterEach
     public void close() throws SQLException {
         stat.close();
         conn.close();
@@ -93,8 +95,9 @@ public class UDFTest
             @Override
             public void xFunc() throws SQLException {
                 int ret = 0;
-                for (int i = 0; i < args(); i++)
+                for (int i = 0; i < args(); i++) {
                     ret += value_int(i);
+                }
                 result(ret);
             }
         });
@@ -237,17 +240,6 @@ public class UDFTest
         prep.close();
     }
 
-    @Test(expected = SQLException.class)
-    public void customErr() throws SQLException {
-        Function.create(conn, "f9", new Function() {
-            @Override
-            public void xFunc() throws SQLException {
-                throw new SQLException("myErr");
-            }
-        });
-        stat.executeQuery("select f9();");
-    }
-
     @Test
     public void trigger() throws SQLException {
         Function.create(conn, "inform", new Function() {
@@ -269,8 +261,9 @@ public class UDFTest
 
             @Override
             protected void xStep() throws SQLException {
-                for (int i = 0; i < args(); i++)
+                for (int i = 0; i < args(); i++) {
                     val += value_int(i);
+                }
             }
 
             @Override
@@ -296,14 +289,16 @@ public class UDFTest
 
             @Override
             protected void xStep() throws SQLException {
-                for (int i = 0; i < args(); i++)
+                for (int i = 0; i < args(); i++) {
                     val += value_int(i);
+                }
             }
 
             @Override
             protected void xInverse() throws SQLException {
-                for (int i = 0; i < args(); i++)
+                for (int i = 0; i < args(); i++) {
                     val -= value_int(i);
+                }
             }
 
             @Override
@@ -422,7 +417,7 @@ public class UDFTest
         });
 
         ResultSet rs = stat.executeQuery("select f1() + f2() + f3() + f4() + f5() + f6()"
-                + " + f7() + f8() + f9() + f10() + f11();");
+            + " + f7() + f8() + f9() + f10() + f11();");
         assertTrue(rs.next());
         assertEquals(rs.getInt(1), 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11);
         rs.close();
@@ -437,8 +432,7 @@ public class UDFTest
             protected void xFunc() {
                 try {
                     sum += value_int(1);
-                }
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     e.printStackTrace();
                 }
             }
@@ -451,7 +445,7 @@ public class UDFTest
         Function.create(conn, "func", func);
         stat.executeUpdate("create table foo (col integer);");
         stat.executeUpdate("create trigger foo_trigger after insert on foo begin"
-                + " select func(new.rowid, new.col); end;");
+            + " select func(new.rowid, new.col); end;");
         int times = 1000;
         List<Thread> threads = new LinkedList<Thread>();
         for (int tn = 0; tn < times; tn++) {
@@ -462,17 +456,18 @@ public class UDFTest
                         Statement s = conn.createStatement();
                         s.executeUpdate("insert into foo values (1);");
                         s.close();
-                    }
-                    catch (SQLException e) {
+                    } catch (SQLException e) {
                         e.printStackTrace();
                     }
                 }
             });
         }
-        for (Thread thread : threads)
+        for (Thread thread : threads) {
             thread.start();
-        for (Thread thread : threads)
+        }
+        for (Thread thread : threads) {
             thread.join();
+        }
 
         // check that all of the threads successfully executed
         ResultSet rs = stat.executeQuery("select sum(col) from foo;");
@@ -488,7 +483,8 @@ public class UDFTest
         assertNotNull(a);
         assertNotNull(b);
         assertEquals(a.length, b.length);
-        for (int i = 0; i < a.length; i++)
+        for (int i = 0; i < a.length; i++) {
             assertEquals(a[i], b[i]);
+        }
     }
 }
