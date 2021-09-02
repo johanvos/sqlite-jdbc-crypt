@@ -34,7 +34,7 @@ public class SQLiteMCURIInterfaceTest {
             ResultSet resultSet = st.executeQuery("SELECT count(*) as nb FROM sqlite_master");
             resultSet.next();
             //System.out.println("The out is : " + resultSet.getString("nb"));
-            assertEquals("When reading the database, the result should contain the number 1", "1", resultSet.getString("nb"));
+            assertEquals("1", resultSet.getString("nb"), "When reading the database, the result should contain the number 1");
             return true;
         } catch (SQLException e) {
             //System.out.println(e.getMessage());
