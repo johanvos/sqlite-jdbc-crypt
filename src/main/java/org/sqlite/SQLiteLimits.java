@@ -1,7 +1,6 @@
 package org.sqlite;
 
 public enum SQLiteLimits {
-
     SQLITE_LIMIT_LENGTH(0),
     SQLITE_LIMIT_SQL_LENGTH(1),
     SQLITE_LIMIT_COLUMN(2),
@@ -13,7 +12,8 @@ public enum SQLiteLimits {
     SQLITE_LIMIT_LIKE_PATTERN_LENGTH(8),
     SQLITE_LIMIT_VARIABLE_NUMBER(9),
     SQLITE_LIMIT_TRIGGER_DEPTH(10),
-    SQLITE_LIMIT_WORKER_THREADS(11);
+    SQLITE_LIMIT_WORKER_THREADS(11),
+    SQLITE_LIMIT_PAGE_COUNT(12);
 
     private final int id;
 

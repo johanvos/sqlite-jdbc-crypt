@@ -65,7 +65,7 @@ The native Sqlite library is compiled and *automaticaly* tested for the followin
 
 | Operating System / Architecture  	| x86 	| x86_64 	| arm 	| armv6 	| armv7 	| arm64 	| ppc64 	|
 |---------------------------------	|-----	|--------	|-----	|-------	|-------	|-------	|-------	|
-| Windows          	                | ✅   	| ✅      	| ❌   	| ❌     	| ❌     	| ❌     	| ❌     	|
+| Windows          	                | ✅   	| ✅      	| ❌   	| ❌     	| ✅     	| ✅     	| ❌     	|
 | Mac Os X                          | ❌   	| ✅      	| ❌   	| ❌     	| ❌     	| ❌     	| ❌     	|
 | Linux Generic                     | ✅   	| ✅      	| ✅   	| ✅     	| ✅     	| ✅     	| ✅     	|
 | Android                           | ✅   	| ✅      	| ✅   	| ✅     	| ✅     	| ✅     	| ✅     	|
@@ -310,8 +310,8 @@ Definition of abbreviations:
 * SHA256 = Secure Hash Algorithm 2 (256 bit hash)
 * SHA512 = Secure Hash Algorithm 2 (512 bit hash)
 
-Each of these algorithme can be used with default configuration or configured.
-Configuration parameters are given bellow.  
+Each of these algorithms can be used with default configuration or configured.
+Configuration parameters are given below.
 ##### AES 128 Bit CBC - No HMAC (wxSQLite3)
 
 This cipher was added to **wxSQLite3** in 2007 as the first supported encryption scheme. It is a 128 bit AES encryption in CBC mode.
