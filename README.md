@@ -65,7 +65,7 @@ The native Sqlite library is compiled and *automaticaly* tested for the followin
 
 | Operating System / Architecture  	| x86 	| x86_64 	| arm 	| armv6 	| armv7 	| arm64 	| ppc64 	|
 |---------------------------------	|-----	|--------	|-----	|-------	|-------	|-------	|-------	|
-| Windows          	                | ✅   	| ✅      	| ❌   	| ❌     	| ❌     	| ❌     	| ❌     	|
+| Windows          	                | ✅   	| ✅      	| ❌   	| ❌     	| ✅     	| ✅     	| ❌     	|
 | Mac Os X                          | ❌   	| ✅      	| ❌   	| ❌     	| ❌     	| ❌     	| ❌     	|
 | Linux Generic                     | ✅   	| ✅      	| ✅   	| ✅     	| ✅     	| ✅     	| ✅     	|
 | Android                           | ✅   	| ✅      	| ✅   	| ✅     	| ✅     	| ✅     	| ✅     	|
