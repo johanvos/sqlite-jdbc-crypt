@@ -47,7 +47,7 @@ endif
 
 # os=Default is meant to be generic unix/linux
 
-known_targets := Linux-x86 Linux-x86_64 Linux-Alpine-x86_64 Linux-arm Linux-armv6 Linux-armv7 Linux-aarch64 Linux-android-arm Linux-ppc64 Mac-x86 Mac-x86_64 Mac-aarch64 DragonFly-x86_64 FreeBSD-x86_64 OpenBSD-x86_64 Windows-x86 Windows-x86_64 SunOS-sparcv9 HPUX-ia64_32
+known_targets := Linux-x86 Linux-x86_64 Linux-Alpine-x86_64 Linux-arm Linux-armv6 Linux-armv7 Linux-aarch64 Linux-android-arm Linux-ppc64 Mac-x86 Mac-x86_64 Mac-aarch64 DragonFly-x86_64 FreeBSD-x86 FreeBSD-x86_64 FreeBSD-aarch64 OpenBSD-x86_64 Windows-x86 Windows-x86_64 Windows-armv7 Windows-aarch64 SunOS-sparcv9 HPUX-ia64_32
 target := $(OS_NAME)-$(OS_ARCH)
 
 ifeq (,$(findstring $(strip $(target)),$(known_targets)))
@@ -94,7 +94,7 @@ Linux-arm_SQLITE_FLAGS  :=
 
 Linux-armv6_CC        := $(CROSS_PREFIX)gcc
 Linux-armv6_STRIP     := $(CROSS_PREFIX)strip
-Linux-armv6_CCFLAGS   := -I$(JAVA_HOME)/include -Ilib/inc_linux -Os -mfloat-abi=hard -mfpu=vfp -fPIC -fvisibility=hidden -std=gnu11 -march=armv6-a
+Linux-armv6_CCFLAGS   := -I$(JAVA_HOME)/include -Ilib/inc_linux -Os -mfloat-abi=hard -mfpu=vfp -fPIC -fvisibility=hidden -std=gnu11 -march=armv6
 Linux-armv6_LINKFLAGS := -shared -static-libgcc
 Linux-armv6_LIBNAME   := libsqlitejdbc.so
 Linux-armv6_SQLITE_FLAGS  :=
@@ -114,9 +114,9 @@ Linux-aarch64_LIBNAME   := libsqlitejdbc.so
 Linux-aarch64_SQLITE_FLAGS  :=
 
 
-Linux-android-arm_CC        := $(CROSS_PREFIX)gcc
-Linux-android-arm_STRIP     := $(CROSS_PREFIX)strip
-Linux-android-arm_CCFLAGS   := -I$(JAVA_HOME)/include -Ilib/inc_linux -I/usr/arm-linux-androideabi/sysroot/usr/include -Os -fPIC -fvisibility=hidden -fPIE -pie -lm -lc -landroid -ldl -llog -std=gnu11
+Linux-android-arm_CC        := $(CROSS_PREFIX)arm-linux-androideabi-gcc
+Linux-android-arm_STRIP     := $(CROSS_PREFIX)llvm-strip
+Linux-android-arm_CCFLAGS   := -I$(JAVA_HOME)/include -Ilib/inc_linux -I/usr/arm-linux-androideabi/sysroot/usr/include -Os -fPIC -fvisibility=hidden -fPIE
 Linux-android-arm_LINKFLAGS := -shared -static-libgcc
 Linux-android-arm_LIBNAME   := libsqlitejdbc.so
 Linux-android-arm_SQLITE_FLAGS  :=
@@ -135,12 +135,26 @@ DragonFly-x86_64_LINKFLAGS := -shared
 DragonFly-x86_64_LIBNAME   := libsqlitejdbc.so
 DragonFly-x86_64_SQLITE_FLAGS  :=
 
-FreeBSD-x86_64_CC        := $(CROSS_PREFIX)cc
+FreeBSD-x86_CC        := $(CROSS_PREFIX)gcc
+FreeBSD-x86_STRIP     := $(CROSS_PREFIX)strip
+FreeBSD-x86_CCFLAGS   := -I$(JAVA_HOME)/include -Ilib/inc_linux -Os -fPIC -fvisibility=hidden
+FreeBSD-x86_LINKFLAGS := -shared
+FreeBSD-x86_LIBNAME   := libsqlitejdbc.so
+FreeBSD-x86_SQLITE_FLAGS  :=
+
+FreeBSD-x86_64_CC        := $(CROSS_PREFIX)gcc
 FreeBSD-x86_64_STRIP     := $(CROSS_PREFIX)strip
-FreeBSD-x86_64_CCFLAGS   := -I$(JAVA_HOME)/include -Ilib/inc_linux -Os -fPIC -fvisibility=hidden -msse4.2 -maes
+FreeBSD-x86_64_CCFLAGS   := -I$(JAVA_HOME)/include -Ilib/inc_linux -Os -fPIC -fvisibility=hidden
 FreeBSD-x86_64_LINKFLAGS := -shared
 FreeBSD-x86_64_LIBNAME   := libsqlitejdbc.so
 FreeBSD-x86_64_SQLITE_FLAGS  :=
+
+FreeBSD-aarch64_CC        := $(CROSS_PREFIX)clang
+FreeBSD-aarch64_STRIP     := $(CROSS_PREFIX)strip
+FreeBSD-aarch64_CCFLAGS   := -I$(JAVA_HOME)/include -Ilib/inc_linux -Os -fPIC -fvisibility=hidden
+FreeBSD-aarch64_LINKFLAGS := -shared
+FreeBSD-aarch64_LIBNAME   := libsqlitejdbc.so
+FreeBSD-aarch64_SQLITE_FLAGS  :=
 
 OpenBSD-x86_64_CC        := $(CROSS_PREFIX)gcc
 OpenBSD-x86_64_STRIP     := $(CROSS_PREFIX)strip
@@ -151,7 +165,7 @@ OpenBSD-x86_64_SQLITE_FLAGS  :=
 
 SunOS-sparcv9_CC        := $(CROSS_PREFIX)gcc
 SunOS-sparcv9_STRIP     := $(CROSS_PREFIX)strip
-SunOS-sparcv9_CCFLAGS   := -I$(JAVA_HOME)/include -Ilib/inc_linux -Os -fPIC -m64 -fvisibility=hidden -march=native
+SunOS-sparcv9_CCFLAGS   := -I$(JAVA_HOME)/include -Ilib/inc_linux -O2s -fPIC -m64 -fvisibility=hidden -march=native
 SunOS-sparcv9_LINKFLAGS := -shared -static-libgcc
 SunOS-sparcv9_LIBNAME   := libsqlitejdbc.so
 SunOS-sparcv9_SQLITE_FLAGS  := 
@@ -205,6 +219,20 @@ Windows-x86_64_CCFLAGS      := -D_JNI_IMPLEMENTATION_ -Ilib/inc_win -Os -msse4.2
 Windows-x86_64_LINKFLAGS    := -Wl,--kill-at -shared -static-libgcc
 Windows-x86_64_LIBNAME      := sqlitejdbc.dll
 Windows-x86_64_SQLITE_FLAGS :=
+
+Windows-armv7_CC           := $(CROSS_PREFIX)clang
+Windows-armv7_STRIP        := $(CROSS_PREFIX)strip
+Windows-armv7_CCFLAGS      := -D_JNI_IMPLEMENTATION_ -Ilib/inc_win -Os
+Windows-armv7_LINKFLAGS    := -Wl,--kill-at -shared -static-libgcc
+Windows-armv7_LIBNAME      := sqlitejdbc.dll
+Windows-armv7_SQLITE_FLAGS :=
+
+Windows-aarch64_CC           := $(CROSS_PREFIX)clang
+Windows-aarch64_STRIP        := $(CROSS_PREFIX)strip
+Windows-aarch64_CCFLAGS      := -D_JNI_IMPLEMENTATION_ -Ilib/inc_win -Os
+Windows-aarch64_LINKFLAGS    := -Wl,--kill-at -shared -static-libgcc
+Windows-aarch64_LIBNAME      := sqlitejdbc.dll
+Windows-aarch64_SQLITE_FLAGS :=
 
 
 CC        := $($(target)_CC)
