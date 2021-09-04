@@ -76,13 +76,13 @@ public class ErrorMessageTest {
         Connection conn = DriverManager.getConnection("jdbc:sqlite:" + from.getAbsolutePath());
         Statement stmt = conn.createStatement();
         stmt.executeUpdate("create table sample(id, name)");
-        stmt.executeUpdate("insert into sample values(1, \"foo\")");
+        stmt.executeUpdate("insert into sample values(1, 'foo')");
 
         File to = File.createTempFile("error-message-test-moved-from", ".sqlite");
         assumeTrue(to.delete());
         assumeTrue(from.renameTo(to));
 
-        Exception exception = assertThrows(SQLException.class, () -> stmt.executeUpdate("insert into sample values(2, \"bar\")"));
+        Exception exception = assertThrows(SQLException.class, () -> stmt.executeUpdate("insert into sample values(2, 'bar')"));
         assertTrue(exception.getMessage().contains("[SQLITE_READONLY_DBMOVED]"));
 
         stmt.close();
@@ -97,7 +97,7 @@ public class ErrorMessageTest {
         Connection conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
         Statement stmt = conn.createStatement();
         stmt.executeUpdate("create table sample(id, name)");
-        stmt.executeUpdate("insert into sample values(1, \"foo\")");
+        stmt.executeUpdate("insert into sample values(1, 'foo')");
         stmt.close();
         conn.close();
 
@@ -106,7 +106,7 @@ public class ErrorMessageTest {
         conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
         stmt = conn.createStatement();
         Statement finalStmt = stmt;
-        Exception exception = assertThrows(SQLException.class, () -> finalStmt.executeUpdate("insert into sample values(2, \"bar\")"));
+        Exception exception = assertThrows(SQLException.class, () -> finalStmt.executeUpdate("insert into sample values(2, 'bar')"));
         assertTrue(exception.getMessage().contains("[SQLITE_READONLY]"));
         stmt.close();
         conn.close();
@@ -132,13 +132,13 @@ public class ErrorMessageTest {
         Connection conn = DriverManager.getConnection("jdbc:sqlite:" + from.getAbsolutePath());
         Statement stmt = conn.createStatement();
         stmt.executeUpdate("create table sample(id, name)");
-        stmt.executeUpdate("insert into sample values(1, \"foo\")");
+        stmt.executeUpdate("insert into sample values(1, 'foo')");
 
         File to = File.createTempFile("error-message-test-plain-2", ".sqlite");
         assumeTrue(to.delete());
         assumeTrue(from.renameTo(to));
 
-        Exception exception = assertThrows(SQLException.class, () -> stmt.executeUpdate("insert into sample values(2, \"bar\")"));
+        Exception exception = assertThrows(SQLException.class, () -> stmt.executeUpdate("insert into sample values(2, 'bar')"));
         assertTrue(exception.getMessage().contains("[SQLITE_READONLY_DBMOVED]"));
         assertThat(exception, new VendorCodeMatcher(SQLiteErrorCode.SQLITE_READONLY));
         assertThat(exception, new ResultCodeMatcher(SQLiteErrorCode.SQLITE_READONLY_DBMOVED));
