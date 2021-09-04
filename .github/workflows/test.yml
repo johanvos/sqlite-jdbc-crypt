@@ -21,6 +21,16 @@ on:
       - '.github/workflows/*.yml'
 
 jobs:
+  build_binaries:
+    name: build shared binaries libraries
+    runs-on: ubuntu-latest
+    steps:
+     - uses: actions/checkout@v2
+     - uses: actions/setup-java@v1
+     - name: Build native
+       run: make native
+     - name: CrossCompile all
+       run: make -j4 native-all
   test:
     name: test ${{ matrix.os }} jdk${{ matrix.java }}
     strategy:
