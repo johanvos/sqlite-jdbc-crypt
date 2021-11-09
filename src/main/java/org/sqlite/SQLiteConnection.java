@@ -57,19 +57,21 @@ public abstract class SQLiteConnection implements Connection {
      * @throws SQLException
      */
     public SQLiteConnection(String url, String fileName, Properties prop) throws SQLException {
-        this.db = open(url, fileName, prop);
-        SQLiteConfig config = db.getConfig();
-        this.connectionConfig = config.newConnectionConfig();
+        DB newDB = null;
         try {
+            this.db = newDB = open(url, fileName, prop);
+            SQLiteConfig config = this.db.getConfig();
+            this.connectionConfig = this.db.getConfig().newConnectionConfig();
             config.apply(this);
-        } catch (SQLException openException) {
+        } catch (Throwable t) {
             try {
-                this.db.close();
-            } catch (SQLException closeException) {
-                // That may happen because there could be a misconfiguration.
-                // The original exception should be thrown to help people debugging.
+                if (newDB != null) {
+                    newDB.close();
+                }
+            } catch (Exception e) {
+                t.addSuppressed(e);
             }
-            throw openException;
+            throw t;
         }
     }
 
@@ -249,7 +251,7 @@ public abstract class SQLiteConnection implements Connection {
         }
 
         // load the native DB
-        DB db;
+        DB db = null;
         try {
             NativeDB.load();
             db = new NativeDB(url, fileName, config);
