@@ -19,4 +19,4 @@ jobs:
           java-package: jdk
           cache: 'maven'
       - name: Build all natives
-        run: make native-all
+        run: make jni-header native-all
