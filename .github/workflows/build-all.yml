@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Install required tools
         run: |
-          sudo apt install curl make
+          sudo apt install curl make jq xmlstarlet gnupg wget
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v2
         with:
