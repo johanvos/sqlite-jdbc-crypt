@@ -1,0 +1,19 @@
+name: build
+on:
+  push:
+    branches:
+      - '**'
+jobs:
+  testings:
+    name: Check code formatting
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+          java-package: jdk
+          cache: 'maven'
+      - name: docker_ps
+        run: docker ps
