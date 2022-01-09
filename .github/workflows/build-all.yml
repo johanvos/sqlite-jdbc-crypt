@@ -8,15 +8,16 @@ jobs:
     name: Build natives libraries
     runs-on: ubuntu-20.04
     steps:
-      - name: Maximize build space
-        uses: easimon/maximize-build-space@master
-        with:
-          remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
+#      - name: Maximize build space
+#        uses: easimon/maximize-build-space@master
+#        with:
+#          remove-dotnet: 'true'
+#          remove-android: 'true'
+#          remove-haskell: 'true'
+      - name: Make space
+        run:  sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
       - name: Install required tools
-        run: |
-          sudo apt install curl make jq xmlstarlet gnupg wget
+        run: sudo apt install xmlstarlet
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v2
         with:
