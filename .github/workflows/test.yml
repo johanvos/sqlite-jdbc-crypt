@@ -59,6 +59,16 @@ jobs:
           java-version: ${{ matrix.java }}
           java-package: jdk
           cache: 'maven'
+
+      - name: Source versions from VERSION file
+        run: cat VERSION >> $GITHUB_ENV
+
+      - name: Display version
+        run: echo $sqliteMCVersion $version $artifactVersion
+
+      - name: Build natives
+        run: make jni-header native
+
       - name: Test
         run: mvn test
 
@@ -78,6 +88,16 @@ jobs:
       - name: Install native-image component
         run: |
           gu install native-image
+
+      - name: Source versions from VERSION file
+        run: cat VERSION >> $GITHUB_ENV
+
+      - name: Display version
+        run: echo $sqliteMCVersion $version $artifactVersion
+
+      - name: Build natives
+        run: make jni-header native
+
       - name: Test
         run: mvn -Pnative test
 
@@ -112,7 +132,7 @@ jobs:
           # no secrets are present in the container state or logs.
           install: |
             apt-get update -q -y
-            apt-get install -q -y maven openjdk-${{ matrix.java }}-jdk
+            apt-get install -q -y maven openjdk-${{ matrix.java }}-jdk build-essential
 
           # We use the Github Action user, 1001:121, so that maven can access
           # the /work directory and create target/classes
@@ -123,4 +143,4 @@ jobs:
           run: |
             echo "Architecture: `uname -a`"
             mvn --version
-            cd /work && mvn test
+            cd /work && make jni-header native && mvn test

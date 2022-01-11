@@ -1,8 +1,6 @@
 name: build
 on:
   push:
-    branches:
-      - '**'
     tags:
       - '*.*.*'
 
@@ -29,11 +27,8 @@ jobs:
       - name: Display version
         run: echo $sqliteMCVersion $version $artifactVersion
 
-      - name: Build all natives
-        run: make jni-header native-all
-
-      - name: Package as jar
-        run: make package
+      - name: Build binaries, test, and package
+        run: make all
       - name: Package DLL binaries
         run: zip -r ./sqlite-natives-$artifactVersion.zip ./src/main/resources/org/sqlite/native
       - uses: actions/upload-artifact@v2
