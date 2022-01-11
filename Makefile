@@ -28,7 +28,8 @@ CCFLAGS:= -I$(SQLITE_OUT) -I$(SQLITE_INCLUDE) $(CCFLAGS)
 
 $(SQLITE_ARCHIVE):
 	echo "Downloading Archive"
-	curl -s https://api.github.com/repos/utelle/SQLite3MultipleCiphers/releases | jq -r ".[].assets[] | select(.name | contains(\"$(version)-amalgamation\")) | .created_at |= fromdateiso8601 | .browser_download_url" | head -1 | wget -O $@ -i -
+	#curl -s https://api.github.com/repos/utelle/SQLite3MultipleCiphers/releases | jq -r ".[].assets[] | select(.name | contains(\"$(version)-amalgamation\")) | .created_at |= fromdateiso8601 | .browser_download_url" | head -1 | wget -O $@ -i -
+	wget -O $@ https://github.com/utelle/SQLite3MultipleCiphers/releases/download/v$(sqliteMCVersion)/sqlite3mc-$(sqliteMCVersion)-sqlite-$(version)-amalgamation.zip
 	#if [ ! -d "$(TARGET)/$(version)" ] ; then git clone https://github.com/utelle/SQLite3MultipleCiphers.git $(TARGET)/$(version); cd $(TARGET)/$(version); fi
 	@mkdir -p $(@D)
 

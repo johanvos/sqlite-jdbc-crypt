@@ -3,15 +3,19 @@ on:
   push:
     branches:
       - '**'
+    tags:
+      - '*.*.*'
+
 jobs:
   build_natives:
+    permissions:
+      contents: write
     name: Build natives libraries
     runs-on: ubuntu-20.04
     steps:
       - name: Make space
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
-      - name: Install required tools
-        run: sudo apt install xmlstarlet
+
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v2
         with:
@@ -19,15 +23,42 @@ jobs:
           java-version: 11
           java-package: jdk
           cache: 'maven'
+      - name: Source versions from VERSION file
+        run: cat VERSION >> $GITHUB_ENV
+
+      - name: Display version
+        run: echo $sqliteMCVersion $version $artifactVersion
+
       - name: Build all natives
         run: make jni-header native-all
+
       - name: Package as jar
         run: make package
       - name: Package DLL binaries
-        run: |
-          source VERSION
-          zip -r ./sqlite-natives-$artifactVersion.zip ./src/main/resources/org/sqlite/native
+        run: zip -r ./sqlite-natives-$artifactVersion.zip ./src/main/resources/org/sqlite/native
       - uses: actions/upload-artifact@v2
         with:
           name: SQLiteMC DLL Binaries
-          path: ./sqlite-natives-*.zip
+          path: |
+            ./sqlite-natives-${{ env.artifactVersion }}.zip
+            ./target/*.jar
+
+      - name: Deploy version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: make deploy
+      - name: Deploy Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: "SQLite-jdbc-${{ env.artifactVersion }}"
+          generate_release_notes: true
+          files: |
+            ./sqlite-natives-${{ env.artifactVersion }}.zip
+            ./target/sqlite-jdbc-${{ env.artifactVersion }}.jar"
+            ./target/sqlite-jdbc-${{ env.artifactVersion }}-javadoc.jar"
+            ./target/sqlite-jdbc-${{ env.artifactVersion }}-sources.jar"
+            ./target/sqlite-jdbc-${{ env.artifactVersion }}.jar.asc"
+            ./target/sqlite-jdbc-${{ env.artifactVersion }}-javadoc.jar.asc"
+            ./target/sqlite-jdbc-${{ env.artifactVersion }}-sources.jar.asc"
+            ./sqlite-natives-${{env.artifactVersion }}.zip"
+
