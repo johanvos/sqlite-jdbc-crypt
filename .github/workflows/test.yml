@@ -60,6 +60,11 @@ jobs:
           java-package: jdk
           cache: 'maven'
 
+      - name: Install tools for windows
+        if: matrix.os  == 'windows-latest'
+        run: | 
+          choco install wget --no-progress
+
       - name: Source versions from VERSION file
         run: cat VERSION >> $GITHUB_ENV
 
@@ -132,7 +137,7 @@ jobs:
           # no secrets are present in the container state or logs.
           install: |
             apt-get update -q -y
-            apt-get install -q -y maven openjdk-${{ matrix.java }}-jdk build-essential
+            apt-get install -q -y maven openjdk-${{ matrix.java }}-jdk build-essential curl wget bash jq
 
           # We use the Github Action user, 1001:121, so that maven can access
           # the /work directory and create target/classes
