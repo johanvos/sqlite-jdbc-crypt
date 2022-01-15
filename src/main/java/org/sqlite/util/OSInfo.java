@@ -24,12 +24,13 @@
 // --------------------------------------
 package org.sqlite.util;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 /**
  * Provides OS name and architecture name.
@@ -37,7 +38,8 @@ import java.util.concurrent.TimeUnit;
  * @author leo
  */
 public class OSInfo {
-    private static HashMap<String, String> archMapping = new HashMap<String, String>();
+    protected static ProcessRunner processRunner = new ProcessRunner();
+    private static final HashMap<String, String> archMapping = new HashMap<>();
 
     public static final String X86 = "x86";
     public static final String X86_64 = "x86_64";
@@ -110,50 +112,27 @@ public class OSInfo {
         return System.getProperty("java.runtime.name", "").toLowerCase().contains("android");
     }
 
-    public static boolean isAlpine() {
-        try {
-            Process p = Runtime.getRuntime().exec("cat /etc/os-release | grep ^ID");
-            p.waitFor(300, TimeUnit.MILLISECONDS);
-
-            InputStream in = p.getInputStream();
-            try {
-                int readLen = 0;
-                ByteArrayOutputStream b = new ByteArrayOutputStream();
-                byte[] buf = new byte[32];
-                while ((readLen = in.read(buf, 0, buf.length)) >= 0) {
-                    b.write(buf, 0, readLen);
-                }
-                return b.toString().toLowerCase().contains("alpine");
-            } finally {
-                if (in != null) {
-                    in.close();
-                }
-            }
-
-        } catch (Throwable e) {
-            return false;
+    public static boolean isMusl() {
+        Path mapFilesDir = Paths.get("/proc/self/map_files");
+        try (Stream<Path> dirStream = Files.list(mapFilesDir)) {
+            return dirStream
+                    .map(
+                            path -> {
+                                try {
+                                    return path.toRealPath().toString();
+                                } catch (IOException e) {
+                                    return "";
+                                }
+                            })
+                    .anyMatch(s -> s.toLowerCase().contains("musl"));
+        } catch (IOException ignored) {
         }
+        return false;
     }
 
     static String getHardwareName() {
         try {
-            Process p = Runtime.getRuntime().exec("uname -m");
-            p.waitFor();
-
-            InputStream in = p.getInputStream();
-            try {
-                int readLen = 0;
-                ByteArrayOutputStream b = new ByteArrayOutputStream();
-                byte[] buf = new byte[32];
-                while ((readLen = in.read(buf, 0, buf.length)) >= 0) {
-                    b.write(buf, 0, readLen);
-                }
-                return b.toString();
-            } finally {
-                if (in != null) {
-                    in.close();
-                }
-            }
+            return processRunner.runAndWaitFor("uname -m");
         } catch (Throwable e) {
             System.err.println("Error while running uname -m: " + e.getMessage());
             return "unknown";
@@ -165,6 +144,17 @@ public class OSInfo {
             String armType = getHardwareName();
             // armType (uname -m) can be armv5t, armv5te, armv5tej, armv5tejl, armv6, armv7, armv7l,
             // aarch64, i686
+
+            // for Android, we fold everything that is not aarch64 into arm
+            if (isAndroid()) {
+                if (armType.startsWith("aarch64")) {
+                    // Use arm64
+                    return "aarch64";
+                } else {
+                    return "arm";
+                }
+            }
+
             if (armType.startsWith("armv6")) {
                 // Raspberry PI
                 return "armv6";
@@ -206,12 +196,9 @@ public class OSInfo {
                     }
                 } else {
                     System.err.println(
-                            "WARNING! readelf not found. Cannot check if running on an armhf system, "
-                                    + "armel architecture will be presumed.");
+                            "WARNING! readelf not found. Cannot check if running on an armhf system, armel architecture will be presumed.");
                 }
-            } catch (IOException e) {
-                // ignored: fall back to "arm" arch (soft-float ABI)
-            } catch (InterruptedException e) {
+            } catch (IOException | InterruptedException e) {
                 // ignored: fall back to "arm" arch (soft-float ABI)
             }
         }
@@ -221,10 +208,6 @@ public class OSInfo {
 
     public static String getArchName() {
         String osArch = System.getProperty("os.arch");
-        // For Android
-        if (isAndroid()) {
-            return "android-arm";
-        }
 
         if (osArch.startsWith("arm")) {
             osArch = resolveArmArchType();
@@ -240,8 +223,10 @@ public class OSInfo {
             return "Windows";
         } else if (osName.contains("Mac") || osName.contains("Darwin")) {
             return "Mac";
-        } else if (isAlpine()) {
-            return "Linux-Alpine";
+        } else if (isMusl()) {
+            return "Linux-Musl";
+        } else if (isAndroid()) {
+            return "Linux-Android";
         } else if (osName.contains("Linux")) {
             return "Linux";
         } else if (osName.contains("AIX")) {

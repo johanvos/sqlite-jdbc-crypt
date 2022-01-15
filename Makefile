@@ -5,9 +5,9 @@ RESOURCE_DIR = src/main/resources
 
 .phony: all package native native-all deploy
 
-all: setversion jni-header package
+all: jni-header package
 
-deploy: setversion
+deploy:
 	mvn package deploy -DperformRelease=true --settings settings.xml
 
 MVN:=mvn
@@ -28,7 +28,9 @@ CCFLAGS:= -I$(SQLITE_OUT) -I$(SQLITE_INCLUDE) $(CCFLAGS)
 
 $(SQLITE_ARCHIVE):
 	echo "Downloading Archive"
-	curl -s https://api.github.com/repos/utelle/SQLite3MultipleCiphers/releases | jq -r ".[].assets[] | select(.name | contains(\"$(version)-amalgamation\")) | .created_at |= fromdateiso8601 | .browser_download_url" | head -1 | wget -O $@ -i -
+	#curl -s https://api.github.com/repos/utelle/SQLite3MultipleCiphers/releases | jq -r ".[].assets[] | select(.name | contains(\"$(version)-amalgamation\")) | .created_at |= fromdateiso8601 | .browser_download_url" | head -1 | wget -O $@ -i -
+	#wget -O $@ https://github.com/utelle/SQLite3MultipleCiphers/releases/download/v$(sqliteMCVersion)/sqlite3mc-$(sqliteMCVersion)-sqlite-$(version)-amalgamation.zip
+	curl -SL "https://github.com/utelle/SQLite3MultipleCiphers/releases/download/v$(sqliteMCVersion)/sqlite3mc-$(sqliteMCVersion)-sqlite-$(version)-amalgamation.zip" >  $@
 	#if [ ! -d "$(TARGET)/$(version)" ] ; then git clone https://github.com/utelle/SQLite3MultipleCiphers.git $(TARGET)/$(version); cd $(TARGET)/$(version); fi
 	@mkdir -p $(@D)
 
@@ -49,11 +51,8 @@ $(TARGET)/common-lib/NativeDB.h: src/main/java/org/sqlite/core/NativeDB.java
 	$(JAVAC) -d $(TARGET)/common-lib -sourcepath $(SRC) -h $(TARGET)/common-lib src/main/java/org/sqlite/core/NativeDB.java
 	mv target/common-lib/org_sqlite_core_NativeDB.h target/common-lib/NativeDB.h
 
-setversion:
-	$(MVN) versions:set -DnewVersion=$(artifactVersion)
-
-test: setversion
-	$(MVN) test
+test:
+	mvn test
 
 clean: clean-target clean-native clean-java clean-tests
 
@@ -125,18 +124,17 @@ $(SQLITE_OUT)/$(LIBNAME): $(SQLITE_HEADER) $(SQLITE_OBJ) $(SRC)/org/sqlite/core/
 	$(CC) $(CCFLAGS) -I $(TARGET)/common-lib -c -o $(SQLITE_OUT)/NativeDB.o $(SRC)/org/sqlite/core/NativeDB.c
 	$(CC) $(CCFLAGS) -o $@ $(SQLITE_OUT)/NativeDB.o $(SQLITE_OBJ) $(LINKFLAGS)
 # Workaround for strip Protocol error when using VirtualBox on Mac
-	cp $@ /tmp/$(@F)
-	$(STRIP) /tmp/$(@F)
-	cp /tmp/$(@F) $@
+	#cp $@ $(_TMP)/$(@F)
+	$(STRIP) $@
+	#cp $(_TMP)/$(@F) $@
 
 NATIVE_DIR=src/main/resources/org/sqlite/native/$(OS_NAME)/$(OS_ARCH)
 NATIVE_TARGET_DIR:=$(TARGET)/classes/org/sqlite/native/$(OS_NAME)/$(OS_ARCH)
 NATIVE_DLL:=$(NATIVE_DIR)/$(LIBNAME)
 
 # For cross-compilation, install docker. See also https://github.com/dockcross/dockcross
-# Freebsd disabled for now...
-#native-all: native win32 win64 win-armv7 win-arm64 mac64 linux32 linux64 freebsd32 freebsd64 freebsd-arm64 linux-arm linux-armv6 linux-armv7 linux-arm64 linux-android-arm linux-ppc64 alpine-linux64
-native-all: native win32 win64 win-armv7 win-arm64 mac64 linux32 linux64 linux-arm linux-armv6 linux-armv7 linux-arm64 linux-android-arm linux-ppc64 alpine-linux64
+#native-all: native win32 win64 win-armv7 win-arm64 mac64 linux32 linux64 freebsd32 freebsd64 freebsd-arm64 linux-arm linux-armv6 linux-armv7 linux-arm64 linux-android-arm linux-android-arm64 linux-android-x86 linux-android-x64 linux-ppc64 alpine-linux64
+native-all: native win32 win64 win-armv7 win-arm64 mac64 linux32 linux64 linux-arm linux-armv6 linux-armv7 linux-arm64 linux-android-arm linux-android-arm64 linux-android-x86 linux-android-x64 linux-ppc64 alpine-linux64
 
 native: $(NATIVE_DLL)
 
@@ -176,7 +174,7 @@ freebsd-arm64: $(SQLITE_UNPACKED) jni-header
 	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/workdir gotson/freebsd-cross-build:aarch64-11.4 sh -c 'make clean-native native OS_NAME=FreeBSD OS_ARCH=aarch64 CROSS_PREFIX=aarch64-unknown-freebsd11-'
 
 alpine-linux64: $(SQLITE_UNPACKED) jni-header
-	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/work xerial/alpine-linux-x86_64 bash -c 'make clean-native native OS_NAME=Linux-Alpine OS_ARCH=x86_64'
+	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/work xerial/alpine-linux-x86_64 bash -c 'make clean-native native OS_NAME=Linux-Musl OS_ARCH=x86_64'
 
 linux-arm: $(SQLITE_UNPACKED) jni-header
 	./docker/dockcross-armv5 -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=armv5-unknown-linux-gnueabi- OS_NAME=Linux OS_ARCH=arm'
@@ -191,7 +189,16 @@ linux-arm64: $(SQLITE_UNPACKED) jni-header
 	./docker/dockcross-arm64 -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=aarch64-unknown-linux-gnu- OS_NAME=Linux OS_ARCH=aarch64'
 
 linux-android-arm: $(SQLITE_UNPACKED) jni-header
-	./docker/dockcross-android-arm -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=/usr/arm-linux-androideabi/bin/arm-linux-androideabi- OS_NAME=Linux OS_ARCH=android-arm'
+	./docker/dockcross-android-arm -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=/usr/arm-linux-androideabi/bin/arm-linux-androideabi- OS_NAME=Linux-Android OS_ARCH=arm'
+
+linux-android-arm64: $(SQLITE_UNPACKED) jni-header
+	./docker/dockcross-android-arm64 -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=/usr/aarch64-linux-android/bin/aarch64-linux-android- OS_NAME=Linux-Android OS_ARCH=aarch64'
+
+linux-android-x86: $(SQLITE_UNPACKED) jni-header
+	./docker/dockcross-android-x86 -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=/usr/i686-linux-android/bin/i686-linux-android- OS_NAME=Linux-Android OS_ARCH=x86'
+
+linux-android-x64: $(SQLITE_UNPACKED) jni-header
+	./docker/dockcross-android-x86_64 -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=/usr/x86_64-linux-android/bin/x86_64-linux-android- OS_NAME=Linux-Android OS_ARCH=x86_64'
 
 linux-ppc64: $(SQLITE_UNPACKED) jni-header
 	./docker/dockcross-ppc64 -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=powerpc64le-unknown-linux-gnu- OS_NAME=Linux OS_ARCH=ppc64'
