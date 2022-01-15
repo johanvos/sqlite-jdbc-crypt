@@ -513,8 +513,8 @@ public abstract class SQLiteConnection implements Connection {
                 }
                 String value = kvp[1].trim();
 
-                //Special case for keys given by URL. Should be URL encoded
-                if (key.equals(SQLiteConfig.Pragma.KEY.pragmaName)){
+                // Special case for keys given by URL. Should be URL encoded
+                if (key.equals(SQLiteConfig.Pragma.KEY.pragmaName)) {
                     try {
                         value = URLDecoder.decode(value, "utf8");
                     } catch (UnsupportedEncodingException ignored) {

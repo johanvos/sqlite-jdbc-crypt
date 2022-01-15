@@ -1,11 +1,10 @@
 package org.sqlite;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 import java.sql.*;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 public class ParametersTest {
 
@@ -33,8 +32,16 @@ public class ParametersTest {
                 checkPragma(stat, "journal_mode", "truncate");
                 checkPragma(stat, "synchronous", "2");
                 checkPragma(stat, "cache_size", "-65536");
-                assertFalse(((SQLiteConnection) stat.getConnection()).getDatabase().getConfig().isEnabledSharedCache());
-                assertTrue(((SQLiteConnection) stat.getConnection()).getDatabase().getConfig().isEnabledSharedCacheConnection());
+                assertFalse(
+                        ((SQLiteConnection) stat.getConnection())
+                                .getDatabase()
+                                .getConfig()
+                                .isEnabledSharedCache());
+                assertTrue(
+                        ((SQLiteConnection) stat.getConnection())
+                                .getDatabase()
+                                .getConfig()
+                                .isEnabledSharedCacheConnection());
             }
         }
     }
@@ -44,7 +51,10 @@ public class ParametersTest {
         File testDB = File.createTempFile("test.db", "", new File("target"));
         testDB.deleteOnExit();
 
-        String uri = "jdbc:sqlite:file:" + testDB + "?cache=private&busy_timeout=1800000&auto_vacuum=2&journal_mode=truncate&synchronous=full&cache_size=-65536";
+        String uri =
+                "jdbc:sqlite:file:"
+                        + testDB
+                        + "?cache=private&busy_timeout=1800000&auto_vacuum=2&journal_mode=truncate&synchronous=full&cache_size=-65536";
         try (Connection connection = DriverManager.getConnection(uri)) {
             try (Statement stat = connection.createStatement()) {
                 stat.execute("select 1 from sqlite_master");
@@ -54,8 +64,16 @@ public class ParametersTest {
                 checkPragma(stat, "journal_mode", "truncate");
                 checkPragma(stat, "synchronous", "2");
                 checkPragma(stat, "cache_size", "-65536");
-                assertFalse(((SQLiteConnection) stat.getConnection()).getDatabase().getConfig().isEnabledSharedCache());
-                assertFalse(((SQLiteConnection) stat.getConnection()).getDatabase().getConfig().isEnabledSharedCacheConnection());
+                assertFalse(
+                        ((SQLiteConnection) stat.getConnection())
+                                .getDatabase()
+                                .getConfig()
+                                .isEnabledSharedCache());
+                assertFalse(
+                        ((SQLiteConnection) stat.getConnection())
+                                .getDatabase()
+                                .getConfig()
+                                .isEnabledSharedCacheConnection());
             }
         }
     }
@@ -67,5 +85,4 @@ public class ParametersTest {
             assertEquals(expectedValue, value);
         }
     }
-
 }

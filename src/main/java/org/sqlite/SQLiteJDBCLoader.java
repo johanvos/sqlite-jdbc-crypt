@@ -436,8 +436,7 @@ public class SQLiteJDBCLoader {
                 versionData.load(versionFile.openStream());
                 version = versionData.getProperty("version", version);
                 version = version.trim().replaceAll("[^0-9\\.]", "");
-            }
-            else {
+            } else {
                 throw new FileNotFoundException("Version file is null");
             }
         } catch (IOException e) {

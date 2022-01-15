@@ -23,8 +23,6 @@
 // --------------------------------------
 package org.sqlite;
 
-import org.sqlite.mc.SQLiteMCConfig;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
@@ -34,6 +32,7 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
+import org.sqlite.mc.SQLiteMCConfig;
 
 /**
  * SQLite Configuration
@@ -185,9 +184,9 @@ public class SQLiteConfig {
         pragmaParams.remove(Pragma.LIMIT_WORKER_THREADS.pragmaName);
         pragmaParams.remove(Pragma.LIMIT_PAGE_COUNT.pragmaName);
 
-
-        //Remove SQLiteMC related PRAGMAS, so that we are not applied twice
-        //TODO : Clone the pragmaTable and remove each Pragma when used so that no checking is required ?
+        // Remove SQLiteMC related PRAGMAS, so that we are not applied twice
+        // TODO : Clone the pragmaTable and remove each Pragma when used so that no checking is
+        // required ?
         // will make a lighter code ?
         pragmaParams.remove(Pragma.KEY.pragmaName);
         pragmaParams.remove(Pragma.REKEY.pragmaName);
@@ -205,13 +204,16 @@ public class SQLiteConfig {
         pragmaParams.remove(Pragma.PLAINTEXT_HEADER_SIZE.pragmaName);
         pragmaParams.remove(Pragma.MC_USE_SQL_INTERFACE.pragmaName);
 
-
         Statement stat = conn.createStatement();
         try {
-            if (pragmaTable.containsKey(Pragma.PASSWORD.pragmaName) || pragmaTable.containsKey(Pragma.KEY.pragmaName)) {
+            if (pragmaTable.containsKey(Pragma.PASSWORD.pragmaName)
+                    || pragmaTable.containsKey(Pragma.KEY.pragmaName)) {
 
                 String password = pragmaTable.getProperty(Pragma.KEY.pragmaName);
-                password = password == null || password.isEmpty() ? pragmaTable.getProperty(Pragma.PASSWORD.pragmaName) : password;
+                password =
+                        password == null || password.isEmpty()
+                                ? pragmaTable.getProperty(Pragma.PASSWORD.pragmaName)
+                                : password;
 
                 String cipherName = pragmaTable.getProperty(Pragma.CIPHER.pragmaName);
 
@@ -221,7 +223,6 @@ public class SQLiteConfig {
                     SQLiteMCConfig config = new SQLiteMCConfig(toProperties());
                     config.applyCipherParameters(conn, stat);
                 }
-
 
                 if (password != null && !password.isEmpty()) {
                     String hexkeyMode = pragmaTable.getProperty(Pragma.HEXKEY_MODE.pragmaName);
@@ -260,7 +261,7 @@ public class SQLiteConfig {
      * Sets a pragma to the given boolean value.
      *
      * @param pragma The pragma to set.
-     * @param flag   The boolean value.
+     * @param flag The boolean value.
      */
     private void set(Pragma pragma, boolean flag) {
         setPragma(pragma, Boolean.toString(flag));
@@ -270,7 +271,7 @@ public class SQLiteConfig {
      * Sets a pragma to the given int value.
      *
      * @param pragma The pragma to set.
-     * @param num    The int value.
+     * @param num The int value.
      */
     private void set(Pragma pragma, int num) {
         setPragma(pragma, Integer.toString(num));
@@ -279,7 +280,7 @@ public class SQLiteConfig {
     /**
      * Checks if the provided value is the default for a given pragma.
      *
-     * @param pragma       The pragma on which to check.
+     * @param pragma The pragma on which to check.
      * @param defaultValue The value to check for.
      * @return True if the given value is the default value; false otherwise.
      */
@@ -290,7 +291,7 @@ public class SQLiteConfig {
     /**
      * Retrives a pragma integer value.
      *
-     * @param pragma       The pragma.
+     * @param pragma The pragma.
      * @param defaultValue The default value.
      * @return The value of the pragma or defaultValue.
      */
@@ -321,7 +322,9 @@ public class SQLiteConfig {
      * @return True if turned on; false otherwise.
      */
     public boolean isEnabledSharedCacheConnection() {
-        return pragmaTable.getProperty(Pragma.CACHE.pragmaName, Cache.PRIVATE.getValue()).equalsIgnoreCase(Cache.SHARED.getValue());
+        return pragmaTable
+                .getProperty(Pragma.CACHE.pragmaName, Cache.PRIVATE.getValue())
+                .equalsIgnoreCase(Cache.SHARED.getValue());
     }
 
     /**
@@ -342,7 +345,7 @@ public class SQLiteConfig {
      * Sets a pragma's value.
      *
      * @param pragma The pragma to change.
-     * @param value  The value to set it to.
+     * @param value The value to set it to.
      */
     public void setPragma(Pragma pragma, String value) {
         pragmaTable.put(pragma.pragmaName, value);
@@ -387,7 +390,7 @@ public class SQLiteConfig {
         return result;
     }
 
-    private static final String[] OnOff = new String[]{"true", "false"};
+    private static final String[] OnOff = new String[] {"true", "false"};
 
     static final Set<String> pragmaSet = new TreeSet<String>();
 
@@ -406,7 +409,10 @@ public class SQLiteConfig {
                 "enable_load_extension",
                 "Enable SQLite load_extention() function, native driver only",
                 OnOff),
-        CACHE("cache", "Enable SQLite Shared-Cache mode (connection)", toStringArray(Cache.values())),
+        CACHE(
+                "cache",
+                "Enable SQLite Shared-Cache mode (connection)",
+                toStringArray(Cache.values())),
 
         // Pragmas that can be set after opening the database
         CACHE_SIZE("cache_size"),
@@ -498,11 +504,11 @@ public class SQLiteConfig {
                 null),
         BUSY_TIMEOUT("busy_timeout", null),
 
-        //Keep compatibility for legacy Xenial JDBC implementation
+        // Keep compatibility for legacy Xenial JDBC implementation
         HEXKEY_MODE("hexkey_mode", toStringArray(HexKeyMode.values())),
         PASSWORD("password", null),
 
-        //New pragmas for SQLiteMC improved support
+        // New pragmas for SQLiteMC improved support
         KEY("key", null),
         REKEY("rekey", null),
         CIPHER("cipher", null),
@@ -577,10 +583,11 @@ public class SQLiteConfig {
     }
 
     /**
-     * Enables or disables the sharing of the database cache and schema data
-     * structures between connections to the same database (connection).
+     * Enables or disables the sharing of the database cache and schema data structures between
+     * connections to the same database (connection).
      *
-     * @see <a href="https://www.sqlite.org/sharedcache.html#enabling_shared_cache_mode">www.sqlite.org/sharedcache.html#enabling_shared_cache_mode</a>
+     * @see <a
+     *     href="https://www.sqlite.org/sharedcache.html#enabling_shared_cache_mode">www.sqlite.org/sharedcache.html#enabling_shared_cache_mode</a>
      */
     public void setCacheMode(Cache value) {
         setPragma(Pragma.CACHE, value.name());
@@ -643,8 +650,8 @@ public class SQLiteConfig {
      * @param enable True to enable; false to disable.
      * @see <a
      *     href="http://www.sqlite.org/pragma.html#pragma_count_changes">www.sqlite.org/pragma.html#pragma_count_changes</a>
-     * @deprecated Enables or disables the count-changes flag. When enabled, INSERT, UPDATE
-     * and DELETE statements return the number of rows they modified.
+     * @deprecated Enables or disables the count-changes flag. When enabled, INSERT, UPDATE and
+     *     DELETE statements return the number of rows they modified.
      */
     @Deprecated
     public void enableCountChanges(boolean enable) {
@@ -751,7 +758,9 @@ public class SQLiteConfig {
     }
 
     public static enum AutoVacuum implements PragmaValue {
-        NONE, FULL, INCREMENTAL;
+        NONE,
+        FULL,
+        INCREMENTAL;
 
         public String getValue() {
             return name();
@@ -759,7 +768,8 @@ public class SQLiteConfig {
     }
 
     public static enum Cache implements PragmaValue {
-        PRIVATE, SHARED;
+        PRIVATE,
+        SHARED;
 
         public String getValue() {
             return name();
@@ -819,7 +829,8 @@ public class SQLiteConfig {
     /**
      * Sets the auto vacuum mode;
      *
-     * @see <a href="https://www.sqlite.org/pragma.html#pragma_auto_vacuum">www.sqlite.org/pragma.html#pragma_auto_vacuum</a>
+     * @see <a
+     *     href="https://www.sqlite.org/pragma.html#pragma_auto_vacuum">www.sqlite.org/pragma.html#pragma_auto_vacuum</a>
      */
     public void setAutoVacuum(AutoVacuum value) {
         setPragma(Pragma.AUTO_VACUUM, value.name());

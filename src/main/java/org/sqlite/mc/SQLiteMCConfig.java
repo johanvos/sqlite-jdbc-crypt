@@ -1,30 +1,28 @@
 package org.sqlite.mc;
 
-
-import org.sqlite.SQLiteConfig;
-
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
+import org.sqlite.SQLiteConfig;
 
 public class SQLiteMCConfig extends SQLiteConfig {
 
-    private static final Pragma[] CIPHER_PRAGMA_ORDER = new Pragma[]{
-        Pragma.CIPHER,
-        Pragma.LEGACY,
-        Pragma.HMAC_CHECK,
-        Pragma.LEGACY_PAGE_SIZE,
-        Pragma.KDF_ITER,
-        Pragma.FAST_KDF_ITER,
-        Pragma.HMAC_USE,
-        Pragma.HMAC_PGNO,
-        Pragma.HMAC_SALT_MASK,
-        Pragma.KDF_ALGORITHM,
-        Pragma.HMAC_ALGORITHM,
-        Pragma.PLAINTEXT_HEADER_SIZE,
-    };
+    private static final Pragma[] CIPHER_PRAGMA_ORDER =
+            new Pragma[] {
+                Pragma.CIPHER,
+                Pragma.LEGACY,
+                Pragma.HMAC_CHECK,
+                Pragma.LEGACY_PAGE_SIZE,
+                Pragma.KDF_ITER,
+                Pragma.FAST_KDF_ITER,
+                Pragma.HMAC_USE,
+                Pragma.HMAC_PGNO,
+                Pragma.HMAC_SALT_MASK,
+                Pragma.KDF_ALGORITHM,
+                Pragma.HMAC_ALGORITHM,
+                Pragma.PLAINTEXT_HEADER_SIZE,
+            };
 
     public SQLiteMCConfig() {
         super();
@@ -43,11 +41,12 @@ public class SQLiteMCConfig extends SQLiteConfig {
         return this;
     }
 
-
     public SQLiteMCConfig withKey(String key) {
 
-        // Hex Key is a string like any key. It will be processed by SQLite. ex: String a = "x'aecc05ff'"
-        // Raw Key is a string like any other key.It will be processed by SQLite. ex: String a = "raw'aecc05ff'"
+        // Hex Key is a string like any key. It will be processed by SQLite. ex: String a =
+        // "x'aecc05ff'"
+        // Raw Key is a string like any other key.It will be processed by SQLite. ex: String a =
+        // "raw'aecc05ff'"
         setPragma(Pragma.KEY, key);
 
         // For compatibility reason key as the password Pragma.
@@ -108,7 +107,7 @@ public class SQLiteMCConfig extends SQLiteConfig {
     }
 
     public SQLiteMCConfig useSQLInterface(boolean sqlInterface) {
-        setPragma(Pragma.MC_USE_SQL_INTERFACE, sqlInterface?"true":"false");
+        setPragma(Pragma.MC_USE_SQL_INTERFACE, sqlInterface ? "true" : "false");
         return this;
     }
 
@@ -116,10 +115,13 @@ public class SQLiteMCConfig extends SQLiteConfig {
         applyCipherParametersByNames(CIPHER_PRAGMA_ORDER, conn, stat);
     }
 
-    protected void applyCipherParametersByNames(Pragma[] pragmas, Connection conn, Statement statement) throws SQLException {
+    protected void applyCipherParametersByNames(
+            Pragma[] pragmas, Connection conn, Statement statement) throws SQLException {
         Properties p = super.toProperties();
 
-        boolean useSQLInterface = Boolean.parseBoolean(p.getProperty(Pragma.MC_USE_SQL_INTERFACE.getPragmaName(), "false" ));
+        boolean useSQLInterface =
+                Boolean.parseBoolean(
+                        p.getProperty(Pragma.MC_USE_SQL_INTERFACE.getPragmaName(), "false"));
 
         String cipherProperty = p.getProperty(Pragma.CIPHER.getPragmaName(), null);
         if (cipherProperty == null)
@@ -130,13 +132,20 @@ public class SQLiteMCConfig extends SQLiteConfig {
 
             if (property != null) {
                 if (!useSQLInterface)
-                    statement.execute(String.format("PRAGMA %s = %s", pragma.getPragmaName(), property));
+                    statement.execute(
+                            String.format("PRAGMA %s = %s", pragma.getPragmaName(), property));
                 else {
                     if (pragma.equals(Pragma.CIPHER)) {
-                        String sql = String.format("SELECT sqlite3mc_config('default:%s', '%s');", pragma.getPragmaName(), cipherProperty);
+                        String sql =
+                                String.format(
+                                        "SELECT sqlite3mc_config('default:%s', '%s');",
+                                        pragma.getPragmaName(), cipherProperty);
                         conn.createStatement().execute(sql);
                     } else {
-                        String sql = String.format("SELECT sqlite3mc_config('%s', 'default:%s', %s);", cipherProperty, pragma.getPragmaName(), property);
+                        String sql =
+                                String.format(
+                                        "SELECT sqlite3mc_config('%s', 'default:%s', %s);",
+                                        cipherProperty, pragma.getPragmaName(), property);
                         conn.createStatement().execute(sql);
                     }
                 }
@@ -179,7 +188,6 @@ public class SQLiteMCConfig extends SQLiteConfig {
             return this.cipherName;
         }
     }
-
 
     public static class Builder extends SQLiteMCConfig {
         @Override
@@ -241,5 +249,4 @@ public class SQLiteMCConfig extends SQLiteConfig {
             return this;
         }
     }
-
 }

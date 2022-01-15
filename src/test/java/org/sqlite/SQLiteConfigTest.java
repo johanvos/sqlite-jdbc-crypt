@@ -38,5 +38,4 @@ public class SQLiteConfigTest {
         config.setBusyTimeout(1500);
         assertEquals(1500, config.getBusyTimeout());
     }
-
 }
