@@ -136,11 +136,8 @@ jobs:
           # publicly in your project's package repository, so it is vital that
           # no secrets are present in the container state or logs.
           install: |
-            wget -O ./sqlite-3.36.0-amal.zip https://github.com/utelle/SQLite3MultipleCiphers/releases/download/v1.3.3/sqlite3mc-1.3.3-sqlite-3.36.0-amalgamation.zip
             apt-get update -y
             apt-get install -y openssl ca-certificates maven openjdk-${{ matrix.java }}-jdk build-essential curl bash jq wget unzip curl gnupg
-            dpkg --purge --force-depends ca-certificates ca-certificates-java
-            apt-get -y -f install
 
           # We use the Github Action user, 1001:121, so that maven can access
           # the /work directory and create target/classes
