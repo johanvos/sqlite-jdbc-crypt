@@ -61,11 +61,10 @@ jobs:
           generate_release_notes: true
           files: |
             ./sqlite-natives-${{ env.artifactVersion }}.zip
-            ./target/sqlite-jdbc-${{ env.artifactVersion }}.jar"
-            ./target/sqlite-jdbc-${{ env.artifactVersion }}-javadoc.jar"
-            ./target/sqlite-jdbc-${{ env.artifactVersion }}-sources.jar"
-            ./target/sqlite-jdbc-${{ env.artifactVersion }}.jar.asc"
-            ./target/sqlite-jdbc-${{ env.artifactVersion }}-javadoc.jar.asc"
-            ./target/sqlite-jdbc-${{ env.artifactVersion }}-sources.jar.asc"
-            ./sqlite-natives-${{env.artifactVersion }}.zip"
+            ./target/sqlite-jdbc-${{ env.artifactVersion }}.jar
+            ./target/sqlite-jdbc-${{ env.artifactVersion }}-javadoc.jar
+            ./target/sqlite-jdbc-${{ env.artifactVersion }}-sources.jar
+            ./target/sqlite-jdbc-${{ env.artifactVersion }}.jar.asc
+            ./target/sqlite-jdbc-${{ env.artifactVersion }}-javadoc.jar.asc
+            ./target/sqlite-jdbc-${{ env.artifactVersion }}-sources.jar.asc
 
