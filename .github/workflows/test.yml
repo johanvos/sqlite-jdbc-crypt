@@ -9,9 +9,11 @@ on:
       - '**.jnilib'
       - '**.dll'
       - '.github/workflows/*.yml'
+      - 'VERSION'
+      - 'pom.xml'
   push:
     branches:
-      - master
+      - '**'
     paths:
       - '**.java'
       - '**.xml'
@@ -19,6 +21,8 @@ on:
       - '**.jnilib'
       - '**.dll'
       - '.github/workflows/*.yml'
+      - 'VERSION'
+      - 'pom.xml'
 
 jobs:
   lint:
