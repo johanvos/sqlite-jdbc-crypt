@@ -1,5 +1,12 @@
 [
     {
+        "name":"java.lang.ClassLoader",
+        "allDeclaredFields":true,
+        "allDeclaredMethods":true,
+        "allPublicMethods":true,
+        "allPublicConstructors":true
+    },
+    {
         "name":"org.sqlite.core.DB",
         "allDeclaredMethods":true,
         "allPublicMethods": true,
