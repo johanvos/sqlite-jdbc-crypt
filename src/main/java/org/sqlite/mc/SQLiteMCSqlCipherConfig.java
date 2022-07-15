@@ -69,7 +69,10 @@ public class SQLiteMCSqlCipherConfig extends SQLiteMCConfig.Builder {
 
     public SQLiteMCSqlCipherConfig withRawUnsaltedKey(byte[] key) {
         if (key.length != 32) {
-            throw new IllegalArgumentException(String.format("Raw unsalted key must be exactly 32 bytes long (provided: %s)", key.length));
+            throw new IllegalArgumentException(
+                    String.format(
+                            "Raw unsalted key must be exactly 32 bytes long (provided: %s)",
+                            key.length));
         }
 
         return withRawKey(toHexString(key));
@@ -77,7 +80,10 @@ public class SQLiteMCSqlCipherConfig extends SQLiteMCConfig.Builder {
 
     public SQLiteMCSqlCipherConfig withRawSaltedKey(byte[] key) {
         if (key.length != 48) {
-            throw new IllegalArgumentException(String.format("Raw unsalted key must be exactly 48 bytes long (provided: %s)", key.length));
+            throw new IllegalArgumentException(
+                    String.format(
+                            "Raw unsalted key must be exactly 48 bytes long (provided: %s)",
+                            key.length));
         }
 
         return withRawKey(toHexString(key));
@@ -85,7 +91,10 @@ public class SQLiteMCSqlCipherConfig extends SQLiteMCConfig.Builder {
 
     private SQLiteMCSqlCipherConfig withRawKey(String key) {
         if (key.length() != 64 && key.length() != 96) {
-            throw new IllegalArgumentException(String.format("Raw unsalted key must be exactly 64 or 96 char long (provided: %s)", key.length()));
+            throw new IllegalArgumentException(
+                    String.format(
+                            "Raw unsalted key must be exactly 64 or 96 char long (provided: %s)",
+                            key.length()));
         }
         withKey(String.format("x'%s'", key));
         return this;

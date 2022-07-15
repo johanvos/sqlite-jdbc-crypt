@@ -6,26 +6,25 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Properties;
-
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfigFactory;
 
 public class SQLiteMCConfig extends SQLiteConfig {
 
     private static final Pragma[] CIPHER_PRAGMA_ORDER =
-            new Pragma[]{
-                    Pragma.CIPHER,
-                    Pragma.LEGACY,
-                    Pragma.HMAC_CHECK,
-                    Pragma.LEGACY_PAGE_SIZE,
-                    Pragma.KDF_ITER,
-                    Pragma.FAST_KDF_ITER,
-                    Pragma.HMAC_USE,
-                    Pragma.HMAC_PGNO,
-                    Pragma.HMAC_SALT_MASK,
-                    Pragma.KDF_ALGORITHM,
-                    Pragma.HMAC_ALGORITHM,
-                    Pragma.PLAINTEXT_HEADER_SIZE,
+            new Pragma[] {
+                Pragma.CIPHER,
+                Pragma.LEGACY,
+                Pragma.HMAC_CHECK,
+                Pragma.LEGACY_PAGE_SIZE,
+                Pragma.KDF_ITER,
+                Pragma.FAST_KDF_ITER,
+                Pragma.HMAC_USE,
+                Pragma.HMAC_PGNO,
+                Pragma.HMAC_SALT_MASK,
+                Pragma.KDF_ALGORITHM,
+                Pragma.HMAC_ALGORITHM,
+                Pragma.PLAINTEXT_HEADER_SIZE,
             };
 
     public SQLiteMCConfig() {
@@ -44,7 +43,9 @@ public class SQLiteMCConfig extends SQLiteConfig {
     }
 
     @Override
-    protected void setupConnection(Connection conn, HashSet<String> pragmaParams, Properties pragmaTable) throws SQLException {
+    protected void setupConnection(
+            Connection conn, HashSet<String> pragmaParams, Properties pragmaTable)
+            throws SQLException {
         // Remove SQLiteMC related PRAGMAS, so that we are not applied twice
         pragmaParams.remove(Pragma.KEY.pragmaName);
         pragmaParams.remove(Pragma.REKEY.pragmaName);
@@ -62,28 +63,38 @@ public class SQLiteMCConfig extends SQLiteConfig {
         pragmaParams.remove(Pragma.PLAINTEXT_HEADER_SIZE.pragmaName);
         pragmaParams.remove(Pragma.MC_USE_SQL_INTERFACE.pragmaName);
 
-
         // Configure before applying the key
         // Call the Cipher parameter function
         try (Statement statement = conn.createStatement()) {
-            boolean useSQLInterface = Boolean.parseBoolean(pragmaTable.getProperty(Pragma.MC_USE_SQL_INTERFACE.getPragmaName(), "false"));
+            boolean useSQLInterface =
+                    Boolean.parseBoolean(
+                            pragmaTable.getProperty(
+                                    Pragma.MC_USE_SQL_INTERFACE.getPragmaName(), "false"));
 
             String cipherProperty = pragmaTable.getProperty(Pragma.CIPHER.getPragmaName(), null);
 
-            //if (cipherProperty == null) throw new SQLException("Cipher name could not be empty at this stage");
+            // if (cipherProperty == null) throw new SQLException("Cipher name could not be empty at
+            // this stage");
 
             for (Pragma pragma : SQLiteMCConfig.CIPHER_PRAGMA_ORDER) {
                 String property = pragmaTable.getProperty(pragma.getPragmaName(), null);
 
                 if (property != null) {
                     if (!useSQLInterface)
-                        statement.execute(String.format("PRAGMA %s = %s", pragma.getPragmaName(), property));
+                        statement.execute(
+                                String.format("PRAGMA %s = %s", pragma.getPragmaName(), property));
                     else {
                         if (pragma.equals(Pragma.CIPHER)) {
-                            String sql = String.format("SELECT sqlite3mc_config('default:%s', '%s');", pragma.getPragmaName(), cipherProperty);
+                            String sql =
+                                    String.format(
+                                            "SELECT sqlite3mc_config('default:%s', '%s');",
+                                            pragma.getPragmaName(), cipherProperty);
                             statement.execute(sql);
                         } else {
-                            String sql = String.format("SELECT sqlite3mc_config('%s', 'default:%s', %s);", cipherProperty, pragma.getPragmaName(), property);
+                            String sql =
+                                    String.format(
+                                            "SELECT sqlite3mc_config('%s', 'default:%s', %s);",
+                                            cipherProperty, pragma.getPragmaName(), property);
                             statement.execute(sql);
                         }
                     }
@@ -91,19 +102,17 @@ public class SQLiteMCConfig extends SQLiteConfig {
             }
         }
 
-        if (pragmaTable.containsKey(Pragma.PASSWORD.pragmaName) || pragmaTable.containsKey(Pragma.KEY.pragmaName)) {
+        if (pragmaTable.containsKey(Pragma.PASSWORD.pragmaName)
+                || pragmaTable.containsKey(Pragma.KEY.pragmaName)) {
             applyPassword(conn, pragmaTable.getProperty(Pragma.KEY.pragmaName));
         }
 
         applyRemainingPragmas(conn, pragmaParams);
     }
 
-
     public static class Builder {
 
-        public Builder() {
-
-        }
+        public Builder() {}
 
         private Properties existingProperties = new Properties();
 
@@ -154,24 +163,20 @@ public class SQLiteMCConfig extends SQLiteConfig {
             return this;
         }
 
-
         public Builder setHmacSaltMask(int value) {
             setPragma(SQLiteConfig.Pragma.HMAC_SALT_MASK, String.valueOf(value));
             return this;
         }
-
 
         public Builder setHmacPgno(HmacPgno value) {
             setPragma(SQLiteConfig.Pragma.HMAC_PGNO, String.valueOf(value.ordinal()));
             return this;
         }
 
-
         public Builder setHmacAlgorithm(HmacAlgorithm value) {
             setPragma(SQLiteConfig.Pragma.HMAC_ALGORITHM, String.valueOf(value.ordinal()));
             return this;
         }
-
 
         public Builder setFastKdfIter(int value) {
             setPragma(SQLiteConfig.Pragma.FAST_KDF_ITER, String.valueOf(value));

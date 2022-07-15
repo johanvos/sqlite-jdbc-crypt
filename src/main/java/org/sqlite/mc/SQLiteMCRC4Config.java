@@ -20,9 +20,6 @@ public class SQLiteMCRC4Config extends SQLiteMCConfig.Builder {
     }
 
     public static SQLiteMCRC4Config getDefault() {
-        return new SQLiteMCRC4Config()
-                .setLegacyValue(1)
-                .setlegacyPageSize(0);
+        return new SQLiteMCRC4Config().setLegacyValue(1).setlegacyPageSize(0);
     }
-
 }

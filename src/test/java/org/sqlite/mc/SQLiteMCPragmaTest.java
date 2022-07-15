@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.sql.*;
 import org.junit.jupiter.api.Test;
 import org.sqlite.SQLiteException;
-import org.sqlite.mc.*;
 
 public class SQLiteMCPragmaTest {
 
@@ -55,7 +54,8 @@ public class SQLiteMCPragmaTest {
 
     public void cipherDatabaseCreate(SQLiteMCConfig.Builder config, String dbPath, String key)
             throws SQLException {
-        Connection connection = config.withKey(key).build().createConnection("jdbc:sqlite:file:" + dbPath);
+        Connection connection =
+                config.withKey(key).build().createConnection("jdbc:sqlite:file:" + dbPath);
         applySchema(connection);
         connection.close();
     }
@@ -85,7 +85,8 @@ public class SQLiteMCPragmaTest {
         }
     }
 
-    public void genericDatabaseTest(SQLiteMCConfig.Builder config) throws IOException, SQLException {
+    public void genericDatabaseTest(SQLiteMCConfig.Builder config)
+            throws IOException, SQLException {
         String path = createFile();
         // 1. Open + Write + cipher with "Key1" key
         String Key1 = "Key1";

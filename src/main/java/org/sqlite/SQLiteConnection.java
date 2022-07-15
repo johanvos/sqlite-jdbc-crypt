@@ -16,7 +16,6 @@ import java.sql.SQLException;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Executor;
-
 import org.sqlite.core.CoreDatabaseMetaData;
 import org.sqlite.core.DB;
 import org.sqlite.core.NativeDB;
@@ -42,7 +41,7 @@ public abstract class SQLiteConnection implements Connection {
     /**
      * Constructor to create a connection to a database at the given location.
      *
-     * @param url      The location of the database.
+     * @param url The location of the database.
      * @param fileName The database.
      * @throws SQLException
      */
@@ -53,9 +52,9 @@ public abstract class SQLiteConnection implements Connection {
     /**
      * Constructor to create a pre-configured connection to a database at the given location.
      *
-     * @param url      The location of the database file.
+     * @param url The location of the database file.
      * @param fileName The database.
-     * @param prop     The configurations to apply.
+     * @param prop The configurations to apply.
      * @throws SQLException
      */
     public SQLiteConnection(String url, String fileName, Properties prop) throws SQLException {
@@ -426,9 +425,7 @@ public abstract class SQLiteConnection implements Connection {
         db.exec(connectionConfig.transactionPrefix(), getAutoCommit());
     }
 
-    /**
-     * @see java.sql.Connection#rollback()
-     */
+    /** @see java.sql.Connection#rollback() */
     @Override
     public void rollback() throws SQLException {
         checkOpen();
