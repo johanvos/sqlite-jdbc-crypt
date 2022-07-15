@@ -29,10 +29,10 @@ public class SQLiteMCWxAES256Config extends SQLiteMCConfig.Builder {
     }
 
     public static SQLiteMCWxAES256Config getDefault() {
-        SQLiteMCWxAES256Config config = new SQLiteMCWxAES256Config();
-        config.setLegacy(0);
-        config.setLegacyPageSize(0);
-        config.setKdfIter(4001);
-        return config;
+        return new SQLiteMCWxAES256Config()
+                .setLegacy(0)
+                .setLegacyPageSize(0)
+                .setKdfIter(4001);
+
     }
 }

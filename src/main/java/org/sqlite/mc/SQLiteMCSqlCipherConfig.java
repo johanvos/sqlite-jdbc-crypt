@@ -67,62 +67,82 @@ public class SQLiteMCSqlCipherConfig extends SQLiteMCConfig.Builder {
         return this;
     }
 
+    public SQLiteMCSqlCipherConfig withRawUnsaltedKey(byte[] key) {
+        if (key.length != 32) {
+            throw new IllegalArgumentException(String.format("Raw unsalted key must be exactly 32 bytes long (provided: %s)", key.length));
+        }
+
+        return withRawKey(toHexString(key));
+    }
+
+    public SQLiteMCSqlCipherConfig withRawSaltedKey(byte[] key) {
+        if (key.length != 48) {
+            throw new IllegalArgumentException(String.format("Raw unsalted key must be exactly 48 bytes long (provided: %s)", key.length));
+        }
+
+        return withRawKey(toHexString(key));
+    }
+
+    private SQLiteMCSqlCipherConfig withRawKey(String key) {
+        if (key.length() != 64 && key.length() != 96) {
+            throw new IllegalArgumentException(String.format("Raw unsalted key must be exactly 64 or 96 char long (provided: %s)", key.length()));
+        }
+        withKey(String.format("x'%s'", key));
+        return this;
+    }
+
     public static SQLiteMCSqlCipherConfig getDefault() {
         return new SQLiteMCSqlCipherConfig();
     }
 
     public static SQLiteMCSqlCipherConfig getV1Defaults() {
-        SQLiteMCSqlCipherConfig config = new SQLiteMCSqlCipherConfig();
-        config.setKdfIter(4000);
-        config.setFastKdfIter(2);
-        config.setHmacUse(false);
-        config.setLegacy(1);
-        config.setLegacyPageSize(1024);
-        config.setKdfAlgorithm(KdfAlgorithm.SHA1);
-        config.setHmacAlgorithm(HmacAlgorithm.SHA1);
-        return config;
+        return new SQLiteMCSqlCipherConfig()
+                .setKdfIter(4000)
+                .setFastKdfIter(2)
+                .setHmacUse(false)
+                .setLegacy(1)
+                .setLegacyPageSize(1024)
+                .setKdfAlgorithm(KdfAlgorithm.SHA1)
+                .setHmacAlgorithm(HmacAlgorithm.SHA1);
     }
 
     public static SQLiteMCSqlCipherConfig getV2Defaults() {
-        SQLiteMCSqlCipherConfig config = new SQLiteMCSqlCipherConfig();
-        config.setKdfIter(4000);
-        config.setFastKdfIter(2);
-        config.setHmacUse(true);
-        config.setHmacPgno(HmacPgno.LITTLE_ENDIAN);
-        config.setHmacSaltMask(0x3a);
-        config.setLegacy(2);
-        config.setLegacyPageSize(1024);
-        config.setKdfAlgorithm(KdfAlgorithm.SHA1);
-        config.setHmacAlgorithm(HmacAlgorithm.SHA1);
-        return config;
+        return new SQLiteMCSqlCipherConfig()
+                .setKdfIter(4000)
+                .setFastKdfIter(2)
+                .setHmacUse(true)
+                .setHmacPgno(HmacPgno.LITTLE_ENDIAN)
+                .setHmacSaltMask(0x3a)
+                .setLegacy(2)
+                .setLegacyPageSize(1024)
+                .setKdfAlgorithm(KdfAlgorithm.SHA1)
+                .setHmacAlgorithm(HmacAlgorithm.SHA1);
     }
 
     public static SQLiteMCSqlCipherConfig getV3Defaults() {
-        SQLiteMCSqlCipherConfig config = new SQLiteMCSqlCipherConfig();
-        config.setKdfIter(64000);
-        config.setFastKdfIter(2);
-        config.setHmacUse(true);
-        config.setHmacPgno(HmacPgno.LITTLE_ENDIAN);
-        config.setHmacSaltMask(0x3a);
-        config.setLegacy(3);
-        config.setLegacyPageSize(1024);
-        config.setKdfAlgorithm(KdfAlgorithm.SHA1);
-        config.setHmacAlgorithm(HmacAlgorithm.SHA1);
-        return config;
+        return new SQLiteMCSqlCipherConfig()
+                .setKdfIter(64000)
+                .setFastKdfIter(2)
+                .setHmacUse(true)
+                .setHmacPgno(HmacPgno.LITTLE_ENDIAN)
+                .setHmacSaltMask(0x3a)
+                .setLegacy(3)
+                .setLegacyPageSize(1024)
+                .setKdfAlgorithm(KdfAlgorithm.SHA1)
+                .setHmacAlgorithm(HmacAlgorithm.SHA1);
     }
 
     public static SQLiteMCSqlCipherConfig getV4Defaults() {
-        SQLiteMCSqlCipherConfig config = new SQLiteMCSqlCipherConfig();
-        config.setKdfIter(256000);
-        config.setFastKdfIter(2);
-        config.setHmacUse(true);
-        config.setHmacPgno(HmacPgno.LITTLE_ENDIAN);
-        config.setHmacSaltMask(0x3a);
-        config.setLegacy(4);
-        config.setLegacyPageSize(4096);
-        config.setKdfAlgorithm(KdfAlgorithm.SHA512);
-        config.setHmacAlgorithm(HmacAlgorithm.SHA512);
-        config.setPlaintextHeaderSize(0);
-        return config;
+        return new SQLiteMCSqlCipherConfig()
+                .setKdfIter(256000)
+                .setFastKdfIter(2)
+                .setHmacUse(true)
+                .setHmacPgno(HmacPgno.LITTLE_ENDIAN)
+                .setHmacSaltMask(0x3a)
+                .setLegacy(4)
+                .setLegacyPageSize(4096)
+                .setKdfAlgorithm(KdfAlgorithm.SHA512)
+                .setHmacAlgorithm(HmacAlgorithm.SHA512)
+                .setPlaintextHeaderSize(0);
     }
 }

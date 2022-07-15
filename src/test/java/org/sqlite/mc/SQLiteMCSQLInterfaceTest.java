@@ -1,4 +1,4 @@
-package org.sqlite;
+package org.sqlite.mc;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import org.junit.jupiter.api.Test;
+import org.sqlite.SQLiteException;
 import org.sqlite.mc.*;
 
 public class SQLiteMCSQLInterfaceTest {
@@ -46,17 +47,17 @@ public class SQLiteMCSQLInterfaceTest {
         stmt.execute(SQL_TABLE);
     }
 
-    public void plainDatabaseCreate(String dbPath) throws IOException, SQLException {
+    public void plainDatabaseCreate(String dbPath) throws SQLException {
         Connection conn = DriverManager.getConnection("jdbc:sqlite:file:" + dbPath);
         applySchema(conn);
         conn.close();
     }
 
-    public void cipherDatabaseCreate(SQLiteMCConfig config, String dbPath, String key)
+    public void cipherDatabaseCreate(SQLiteMCConfig.Builder config, String dbPath, String key)
             throws SQLException {
         Connection connection =
                 config.withKey(key)
-                        .useSQLInterface(true)
+                        .useSQLInterface(true).build()
                         .createConnection("jdbc:sqlite:file:" + dbPath);
         applySchema(connection);
         connection.close();
@@ -78,18 +79,18 @@ public class SQLiteMCSQLInterfaceTest {
         c.close();
     }
 
-    public Connection cipherDatabaseOpen(SQLiteMCConfig config, String dbPath, String key)
+    public Connection cipherDatabaseOpen(SQLiteMCConfig.Builder config, String dbPath, String key)
             throws SQLException {
         try {
             return config.withKey(key)
                     .useSQLInterface(true)
-                    .createConnection("jdbc:sqlite:file:" + dbPath);
+                    .build().createConnection("jdbc:sqlite:file:" + dbPath);
         } catch (SQLiteException e) {
             return null;
         }
     }
 
-    public void genericDatabaseTest(SQLiteMCConfig config) throws IOException, SQLException {
+    public void genericDatabaseTest(SQLiteMCConfig.Builder config) throws IOException, SQLException {
         String path = createFile();
         // 1. Open + Write + cipher with "Key1" key
         String Key1 = "Key1";
@@ -143,7 +144,7 @@ public class SQLiteMCSQLInterfaceTest {
 
     @Test
     public void chacha20DatabaseHexKeyTest() throws SQLException, IOException {
-        SQLiteMCConfig config = SQLiteMCChacha20Config.getDefault();
+        SQLiteMCConfig.Builder config = SQLiteMCChacha20Config.getDefault();
 
         String dbfile = createFile();
         String Key1 = "raw:54686973206973206D792076657279207365637265742070617373776F72642E";
@@ -162,7 +163,7 @@ public class SQLiteMCSQLInterfaceTest {
 
     @Test
     public void sqlCipherDatabaseHexKeyTest() throws SQLException, IOException {
-        SQLiteMCConfig config = SQLiteMCSqlCipherConfig.getDefault();
+        SQLiteMCConfig.Builder config = SQLiteMCSqlCipherConfig.getDefault();
 
         String dbfile = createFile();
         String Key1 = "x'54686973206973206D792076657279207365637265742070617373776F72642E'";
@@ -200,12 +201,12 @@ public class SQLiteMCSQLInterfaceTest {
 
     @Test
     public void defaultCihperDatabaseTest() throws IOException, SQLException {
-        genericDatabaseTest(new SQLiteMCConfig());
+        genericDatabaseTest(new SQLiteMCConfig.Builder());
     }
 
     @Test
     public void defaultCihperDatabaseWithSpecialKeyTest() throws IOException, SQLException {
-        SQLiteMCConfig config = new SQLiteMCConfig();
+        SQLiteMCConfig.Builder config = new SQLiteMCConfig.Builder();
 
         String path = createFile();
         // 1. Open + Write + cipher with "Key1" key
@@ -257,9 +258,9 @@ public class SQLiteMCSQLInterfaceTest {
     public void crossCipherAlgorithmTest() throws IOException, SQLException {
         String dbfile = createFile();
         String key = "key";
-        cipherDatabaseCreate(new SQLiteMCConfig(), dbfile, key);
+        cipherDatabaseCreate(new SQLiteMCConfig.Builder(), dbfile, key);
 
-        Connection c = cipherDatabaseOpen(new SQLiteMCConfig(), dbfile, key);
+        Connection c = cipherDatabaseOpen(new SQLiteMCConfig.Builder(), dbfile, key);
         assertTrue(databaseIsReadable(c), "Crosstest : Should be able to read the base db");
         c.close();
 

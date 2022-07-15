@@ -22,9 +22,8 @@ public class SQLiteMCWxAES128Config extends SQLiteMCConfig.Builder {
     }
 
     public static SQLiteMCWxAES128Config getDefault() {
-        SQLiteMCWxAES128Config config = new SQLiteMCWxAES128Config();
-        config.setLegacy(0);
-        config.setLegacyPageSize(0);
-        return config;
+        return new SQLiteMCWxAES128Config()
+                .setLegacy(0)
+                .setLegacyPageSize(0);
     }
 }

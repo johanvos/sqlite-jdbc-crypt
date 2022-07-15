@@ -14,7 +14,9 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Executor;
+
 import org.sqlite.core.CoreDatabaseMetaData;
 import org.sqlite.core.DB;
 import org.sqlite.core.NativeDB;
@@ -40,7 +42,7 @@ public abstract class SQLiteConnection implements Connection {
     /**
      * Constructor to create a connection to a database at the given location.
      *
-     * @param url The location of the database.
+     * @param url      The location of the database.
      * @param fileName The database.
      * @throws SQLException
      */
@@ -51,9 +53,9 @@ public abstract class SQLiteConnection implements Connection {
     /**
      * Constructor to create a pre-configured connection to a database at the given location.
      *
-     * @param url The location of the database file.
+     * @param url      The location of the database file.
      * @param fileName The database.
-     * @param prop The configurations to apply.
+     * @param prop     The configurations to apply.
      * @throws SQLException
      */
     public SQLiteConnection(String url, String fileName, Properties prop) throws SQLException {
@@ -199,7 +201,7 @@ public abstract class SQLiteConnection implements Connection {
 
         // Extract pragma as properties
         String fileName = extractPragmasFromFilename(url, origFileName, newProps);
-        SQLiteConfig config = new SQLiteConfig(newProps);
+        SQLiteConfig config = SQLiteConfigFactory.getFromProperties(newProps);
 
         // check the path to the file exists
         if (!fileName.isEmpty()
@@ -360,8 +362,6 @@ public abstract class SQLiteConnection implements Connection {
      * Sets the timeout value for the connection. A timeout value less than or equal to zero turns
      * off all busy handlers.
      *
-     * @see <a
-     *     href="http://www.sqlite.org/c3ref/busy_timeout.html">http://www.sqlite.org/c3ref/busy_timeout.html</a>
      * @param timeoutMillis The timeout value in milliseconds.
      * @throws SQLException
      */
@@ -426,7 +426,9 @@ public abstract class SQLiteConnection implements Connection {
         db.exec(connectionConfig.transactionPrefix(), getAutoCommit());
     }
 
-    /** @see java.sql.Connection#rollback() */
+    /**
+     * @see java.sql.Connection#rollback()
+     */
     @Override
     public void rollback() throws SQLException {
         checkOpen();
@@ -494,6 +496,9 @@ public abstract class SQLiteConnection implements Connection {
 
         int nonPragmaCount = 0;
         String[] parameters = filename.substring(parameterDelimiter + 1).split("&");
+
+        Set<String> pragmaSet = SQLiteConfig.Pragma.pragmaNameSet();
+
         for (int i = 0; i < parameters.length; i++) {
             // process parameters in reverse-order, last specified pragma value wins
             String parameter = parameters[parameters.length - 1 - i].trim();
@@ -505,7 +510,8 @@ public abstract class SQLiteConnection implements Connection {
 
             String[] kvp = parameter.split("=");
             String key = kvp[0].trim().toLowerCase();
-            if (SQLiteConfig.pragmaSet.contains(key)) {
+
+            if (pragmaSet.contains(key)) {
                 if (kvp.length == 1) {
                     throw new SQLException(
                             String.format(

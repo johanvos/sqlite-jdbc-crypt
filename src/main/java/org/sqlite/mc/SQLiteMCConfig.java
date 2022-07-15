@@ -1,252 +1,241 @@
 package org.sqlite.mc;
 
+import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
 import java.util.Properties;
+
 import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteConfigFactory;
 
 public class SQLiteMCConfig extends SQLiteConfig {
 
     private static final Pragma[] CIPHER_PRAGMA_ORDER =
-            new Pragma[] {
-                Pragma.CIPHER,
-                Pragma.LEGACY,
-                Pragma.HMAC_CHECK,
-                Pragma.LEGACY_PAGE_SIZE,
-                Pragma.KDF_ITER,
-                Pragma.FAST_KDF_ITER,
-                Pragma.HMAC_USE,
-                Pragma.HMAC_PGNO,
-                Pragma.HMAC_SALT_MASK,
-                Pragma.KDF_ALGORITHM,
-                Pragma.HMAC_ALGORITHM,
-                Pragma.PLAINTEXT_HEADER_SIZE,
+            new Pragma[]{
+                    Pragma.CIPHER,
+                    Pragma.LEGACY,
+                    Pragma.HMAC_CHECK,
+                    Pragma.LEGACY_PAGE_SIZE,
+                    Pragma.KDF_ITER,
+                    Pragma.FAST_KDF_ITER,
+                    Pragma.HMAC_USE,
+                    Pragma.HMAC_PGNO,
+                    Pragma.HMAC_SALT_MASK,
+                    Pragma.KDF_ALGORITHM,
+                    Pragma.HMAC_ALGORITHM,
+                    Pragma.PLAINTEXT_HEADER_SIZE,
             };
 
     public SQLiteMCConfig() {
         super();
     }
 
-    public SQLiteMCConfig(Properties prop) {
-        super(prop);
+    public SQLiteMCConfig(Properties existingProperties) {
+        super(existingProperties);
     }
 
-    protected boolean isValid(Integer value, int min, int max) {
-        return (value >= min && value <= max);
+    @Override
+    public Properties toProperties() {
+        Properties props = super.toProperties();
+        props.put(SQLiteConfigFactory.CONFIG_CLASS_NAME, getClass().getName());
+        return props;
     }
 
-    protected SQLiteMCConfig setCipher(CipherAlgorithm cipherAlgorithm) {
-        setPragma(SQLiteConfig.Pragma.CIPHER, cipherAlgorithm.getValue());
-        return this;
-    }
+    @Override
+    protected void setupConnection(Connection conn, HashSet<String> pragmaParams, Properties pragmaTable) throws SQLException {
+        // Remove SQLiteMC related PRAGMAS, so that we are not applied twice
+        pragmaParams.remove(Pragma.KEY.pragmaName);
+        pragmaParams.remove(Pragma.REKEY.pragmaName);
+        pragmaParams.remove(Pragma.CIPHER.pragmaName);
+        pragmaParams.remove(Pragma.HMAC_CHECK.pragmaName);
+        pragmaParams.remove(Pragma.LEGACY.pragmaName);
+        pragmaParams.remove(Pragma.LEGACY_PAGE_SIZE.pragmaName);
+        pragmaParams.remove(Pragma.KDF_ITER.pragmaName);
+        pragmaParams.remove(Pragma.FAST_KDF_ITER.pragmaName);
+        pragmaParams.remove(Pragma.HMAC_USE.pragmaName);
+        pragmaParams.remove(Pragma.HMAC_PGNO.pragmaName);
+        pragmaParams.remove(Pragma.HMAC_SALT_MASK.pragmaName);
+        pragmaParams.remove(Pragma.KDF_ALGORITHM.pragmaName);
+        pragmaParams.remove(Pragma.HMAC_ALGORITHM.pragmaName);
+        pragmaParams.remove(Pragma.PLAINTEXT_HEADER_SIZE.pragmaName);
+        pragmaParams.remove(Pragma.MC_USE_SQL_INTERFACE.pragmaName);
 
-    public SQLiteMCConfig withKey(String key) {
 
-        // Hex Key is a string like any key. It will be processed by SQLite. ex: String a =
-        // "x'aecc05ff'"
-        // Raw Key is a string like any other key.It will be processed by SQLite. ex: String a =
-        // "raw'aecc05ff'"
-        setPragma(Pragma.KEY, key);
+        // Configure before applying the key
+        // Call the Cipher parameter function
+        try (Statement statement = conn.createStatement()) {
+            boolean useSQLInterface = Boolean.parseBoolean(pragmaTable.getProperty(Pragma.MC_USE_SQL_INTERFACE.getPragmaName(), "false"));
 
-        // For compatibility reason key as the password Pragma.
-        // Here to be compatible keep the code writen in original Xenial JDBC
-        setPragma(Pragma.PASSWORD, key);
+            String cipherProperty = pragmaTable.getProperty(Pragma.CIPHER.getPragmaName(), null);
 
-        return this;
-    }
+            //if (cipherProperty == null) throw new SQLException("Cipher name could not be empty at this stage");
 
-    protected SQLiteMCConfig setLegacy(int value) {
-        setPragma(SQLiteConfig.Pragma.LEGACY, String.valueOf(value));
-        return this;
-    }
+            for (Pragma pragma : SQLiteMCConfig.CIPHER_PRAGMA_ORDER) {
+                String property = pragmaTable.getProperty(pragma.getPragmaName(), null);
 
-    protected SQLiteMCConfig setLegacyPageSize(int value) {
-        setPragma(Pragma.LEGACY_PAGE_SIZE, String.valueOf(value));
-        return this;
-    }
-
-    protected SQLiteMCConfig setKdfIter(int value) {
-        setPragma(SQLiteConfig.Pragma.KDF_ITER, String.valueOf(value));
-        return this;
-    }
-
-    protected SQLiteMCConfig setFastKdfIter(int value) {
-        setPragma(SQLiteConfig.Pragma.FAST_KDF_ITER, String.valueOf(value));
-        return this;
-    }
-
-    protected SQLiteMCConfig setHmacUse(boolean value) {
-        setPragma(SQLiteConfig.Pragma.HMAC_USE, String.valueOf(value ? 1 : 0));
-        return this;
-    }
-
-    protected SQLiteMCConfig setHmacPgno(HmacPgno value) {
-        setPragma(SQLiteConfig.Pragma.HMAC_PGNO, String.valueOf(value.ordinal()));
-        return this;
-    }
-
-    protected SQLiteMCConfig setHmacSaltMask(int value) {
-        setPragma(SQLiteConfig.Pragma.HMAC_SALT_MASK, String.valueOf(value));
-        return this;
-    }
-
-    protected SQLiteMCConfig setKdfAlgorithm(KdfAlgorithm value) {
-        setPragma(SQLiteConfig.Pragma.KDF_ALGORITHM, String.valueOf(value.ordinal()));
-        return this;
-    }
-
-    protected SQLiteMCConfig setHmacAlgorithm(HmacAlgorithm value) {
-        setPragma(SQLiteConfig.Pragma.HMAC_ALGORITHM, String.valueOf(value.ordinal()));
-        return this;
-    }
-
-    protected SQLiteMCConfig setPlaintextHeaderSize(int value) {
-        setPragma(SQLiteConfig.Pragma.PLAINTEXT_HEADER_SIZE, String.valueOf(value));
-        return this;
-    }
-
-    public SQLiteMCConfig useSQLInterface(boolean sqlInterface) {
-        setPragma(Pragma.MC_USE_SQL_INTERFACE, sqlInterface ? "true" : "false");
-        return this;
-    }
-
-    public void applyCipherParameters(Connection conn, Statement stat) throws SQLException {
-        applyCipherParametersByNames(CIPHER_PRAGMA_ORDER, conn, stat);
-    }
-
-    protected void applyCipherParametersByNames(
-            Pragma[] pragmas, Connection conn, Statement statement) throws SQLException {
-        Properties p = super.toProperties();
-
-        boolean useSQLInterface =
-                Boolean.parseBoolean(
-                        p.getProperty(Pragma.MC_USE_SQL_INTERFACE.getPragmaName(), "false"));
-
-        String cipherProperty = p.getProperty(Pragma.CIPHER.getPragmaName(), null);
-        if (cipherProperty == null)
-            throw new SQLException("Cipher name could not be empty at this stage");
-
-        for (Pragma pragma : pragmas) {
-            String property = p.getProperty(pragma.getPragmaName(), null);
-
-            if (property != null) {
-                if (!useSQLInterface)
-                    statement.execute(
-                            String.format("PRAGMA %s = %s", pragma.getPragmaName(), property));
-                else {
-                    if (pragma.equals(Pragma.CIPHER)) {
-                        String sql =
-                                String.format(
-                                        "SELECT sqlite3mc_config('default:%s', '%s');",
-                                        pragma.getPragmaName(), cipherProperty);
-                        conn.createStatement().execute(sql);
-                    } else {
-                        String sql =
-                                String.format(
-                                        "SELECT sqlite3mc_config('%s', 'default:%s', %s);",
-                                        cipherProperty, pragma.getPragmaName(), property);
-                        conn.createStatement().execute(sql);
+                if (property != null) {
+                    if (!useSQLInterface)
+                        statement.execute(String.format("PRAGMA %s = %s", pragma.getPragmaName(), property));
+                    else {
+                        if (pragma.equals(Pragma.CIPHER)) {
+                            String sql = String.format("SELECT sqlite3mc_config('default:%s', '%s');", pragma.getPragmaName(), cipherProperty);
+                            statement.execute(sql);
+                        } else {
+                            String sql = String.format("SELECT sqlite3mc_config('%s', 'default:%s', %s);", cipherProperty, pragma.getPragmaName(), property);
+                            statement.execute(sql);
+                        }
                     }
                 }
             }
         }
+
+        if (pragmaTable.containsKey(Pragma.PASSWORD.pragmaName) || pragmaTable.containsKey(Pragma.KEY.pragmaName)) {
+            applyPassword(conn, pragmaTable.getProperty(Pragma.KEY.pragmaName));
+        }
+
+        applyRemainingPragmas(conn, pragmaParams);
     }
 
-    public enum HmacPgno {
-        NATIVE,
-        LITTLE_ENDIAN,
-        BIG_ENDIAN
-    }
 
-    public enum KdfAlgorithm {
-        SHA1,
-        SHA256,
-        SHA512
-    }
+    public static class Builder {
 
-    public enum HmacAlgorithm {
-        SHA1,
-        SHA256,
-        SHA512
-    }
+        public Builder() {
 
-    public enum CipherAlgorithm {
-        SQL_CIPHER("sqlcipher"),
-        RC4("rc4"),
-        CHACHA20("chacha20"),
-        WX_AES128("aes128cbc"),
-        WX_AES256("aes256cbc");
-
-        private final String cipherName;
-
-        CipherAlgorithm(String name) {
-            this.cipherName = name;
         }
 
-        public String getValue() {
-            return this.cipherName;
-        }
-    }
+        private Properties existingProperties = new Properties();
 
-    public static class Builder extends SQLiteMCConfig {
-        @Override
-        public Builder setPlaintextHeaderSize(int value) {
-            return (Builder) super.setPlaintextHeaderSize(value);
+        private void setPragma(Pragma pragma, String value) {
+            existingProperties.put(pragma.pragmaName, value);
         }
 
-        @Override
-        public Builder setLegacy(int value) {
-            return (Builder) super.setLegacy(value);
+        protected boolean isValid(Integer value, int min, int max) {
+            return (value >= min && value <= max);
         }
 
-        @Override
-        public Builder setKdfIter(int value) {
-            return (Builder) super.setKdfIter(value);
+        protected String toHexString(byte[] key) {
+            ByteBuffer byteBuffer = ByteBuffer.wrap(key);
+            StringBuilder hexString = new StringBuilder();
+            while (byteBuffer.hasRemaining()) {
+                hexString.append(String.format("%02x", byteBuffer.get()));
+            }
+            return hexString.toString();
         }
 
-        @Override
-        public Builder setKdfAlgorithm(KdfAlgorithm value) {
-            return (Builder) super.setKdfAlgorithm(value);
-        }
-
-        @Override
-        public Builder setHmacUse(boolean value) {
-            return (Builder) super.setHmacUse(value);
-        }
-
-        @Override
-        public Builder setHmacSaltMask(int value) {
-            return (Builder) super.setHmacSaltMask(value);
-        }
-
-        @Override
-        public Builder setHmacPgno(HmacPgno value) {
-            return (Builder) super.setHmacPgno(value);
-        }
-
-        @Override
-        public Builder setHmacAlgorithm(HmacAlgorithm value) {
-            return (Builder) super.setHmacAlgorithm(value);
-        }
-
-        @Override
-        public Builder setFastKdfIter(int value) {
-            return (Builder) super.setFastKdfIter(value);
-        }
-
-        @Override
-        public Builder setLegacyPageSize(int value) {
-            return (Builder) super.setLegacyPageSize(value);
-        }
-
-        @Override
-        public Builder setCipher(CipherAlgorithm cipherAlgorithm) {
-            return (Builder) super.setCipher(cipherAlgorithm);
-        }
-
-        public SQLiteMCConfig toSQLiteMCConfig() {
+        public Builder fromExistingProperties(Properties props) {
+            this.existingProperties.putAll(props);
             return this;
+        }
+
+        public Builder setPlaintextHeaderSize(int value) {
+            setPragma(SQLiteConfig.Pragma.PLAINTEXT_HEADER_SIZE, String.valueOf(value));
+            return this;
+        }
+
+        public Builder setLegacy(int value) {
+            setPragma(SQLiteConfig.Pragma.LEGACY, String.valueOf(value));
+            return this;
+        }
+
+        public Builder setKdfIter(int value) {
+            setPragma(SQLiteConfig.Pragma.KDF_ITER, String.valueOf(value));
+            return this;
+        }
+
+        public Builder setKdfAlgorithm(KdfAlgorithm value) {
+            setPragma(SQLiteConfig.Pragma.KDF_ALGORITHM, String.valueOf(value.ordinal()));
+            return this;
+        }
+
+        public Builder setHmacUse(boolean value) {
+            setPragma(SQLiteConfig.Pragma.HMAC_USE, String.valueOf(value ? 1 : 0));
+            return this;
+        }
+
+
+        public Builder setHmacSaltMask(int value) {
+            setPragma(SQLiteConfig.Pragma.HMAC_SALT_MASK, String.valueOf(value));
+            return this;
+        }
+
+
+        public Builder setHmacPgno(HmacPgno value) {
+            setPragma(SQLiteConfig.Pragma.HMAC_PGNO, String.valueOf(value.ordinal()));
+            return this;
+        }
+
+
+        public Builder setHmacAlgorithm(HmacAlgorithm value) {
+            setPragma(SQLiteConfig.Pragma.HMAC_ALGORITHM, String.valueOf(value.ordinal()));
+            return this;
+        }
+
+
+        public Builder setFastKdfIter(int value) {
+            setPragma(SQLiteConfig.Pragma.FAST_KDF_ITER, String.valueOf(value));
+            return this;
+        }
+
+        public Builder setLegacyPageSize(int value) {
+            setPragma(Pragma.LEGACY_PAGE_SIZE, String.valueOf(value));
+            return this;
+        }
+
+        public Builder setCipher(CipherAlgorithm cipherAlgorithm) {
+            setPragma(SQLiteConfig.Pragma.CIPHER, cipherAlgorithm.getValue());
+            return this;
+        }
+
+        public Builder useSQLInterface() {
+            return useSQLInterface(true);
+        }
+
+        public Builder useSQLInterface(boolean sqlInterface) {
+            setPragma(Pragma.MC_USE_SQL_INTERFACE, sqlInterface ? "true" : "false");
+            return this;
+        }
+
+        public Builder withKey(String key) {
+
+            // Hex Key is a string like any key. It will be processed by SQLite. ex: String a =
+            // "x'aecc05ff'"
+            // Raw Key is a string like any other key.It will be processed by SQLite. ex: String a =
+            // "raw'aecc05ff'"
+            setPragma(Pragma.HEXKEY_MODE, String.valueOf(HexKeyMode.NONE));
+            setPragma(Pragma.KEY, key);
+
+            // For compatibility reason key as the password Pragma.
+            // Here to be compatible keep the code writen in original Xenial JDBC*
+            // TODO: Remove this?
+            setPragma(Pragma.PASSWORD, key);
+
+            return this;
+        }
+
+        public Builder withHexKey(byte[] key) {
+            ByteBuffer byteBuffer = ByteBuffer.wrap(key);
+            StringBuilder hexString = new StringBuilder();
+            while (byteBuffer.hasRemaining()) {
+                hexString.append(String.format("%02X ", byteBuffer.get()));
+            }
+            return withKey(hexString.toString());
+        }
+
+        public Builder withHexKey(String hexkey) {
+            withKey(hexkey);
+            setPragma(Pragma.HEXKEY_MODE, String.valueOf(HexKeyMode.SSE));
+            return this;
+        }
+
+        @Deprecated
+        public SQLiteMCConfig toSQLiteMCConfig() {
+            return build();
+        }
+
+        public SQLiteMCConfig build() {
+            return new SQLiteMCConfig(this.existingProperties);
         }
     }
 }

@@ -1,4 +1,4 @@
-package org.sqlite;
+package org.sqlite.mc;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.sql.*;
 import org.junit.jupiter.api.Test;
+import org.sqlite.SQLiteException;
 import org.sqlite.mc.SQLiteMCConfig;
 import org.sqlite.mc.SQLiteMCSqlCipherConfig;
 
@@ -93,7 +94,7 @@ public class SQLiteMCURIInterfaceTest {
         }
     }
 
-    public void genericDatabaseTest(SQLiteMCConfig config) throws IOException, SQLException {
+    public void genericDatabaseTest(SQLiteMCConfig.Builder config) throws IOException, SQLException {
         String path = createFile();
         // 1. Open + Write + cipher with "Key1" key
         String Key1 = "Key1";
@@ -188,7 +189,7 @@ public class SQLiteMCURIInterfaceTest {
                 new SQLiteMCSqlCipherConfig()
                         .setLegacy(1)
                         .setKdfIter(4000)
-                        .withKey(Key2)
+                        .withKey(Key2).build()
                         .createConnection("jdbc:sqlite:file:" + dbfile);
         assertTrue(
                 databaseIsReadable(c),
@@ -200,7 +201,7 @@ public class SQLiteMCURIInterfaceTest {
                         .setLegacy(1)
                         .setKdfIter(4000)
                         .withKey(Key2)
-                        .useSQLInterface(true)
+                        .useSQLInterface(true).build()
                         .createConnection("jdbc:sqlite:file:" + dbfile);
         assertTrue(
                 databaseIsReadable(c),
