@@ -84,6 +84,8 @@ public class OSInfo {
         archMapping.put("powerpc64", PPC64);
         archMapping.put("power_pc64", PPC64);
         archMapping.put("power_rs64", PPC64);
+        archMapping.put("ppc64el", PPC64);
+        archMapping.put("ppc64le", PPC64);
     }
 
     public static void main(String[] args) {
@@ -125,7 +127,17 @@ public class OSInfo {
                                 }
                             })
                     .anyMatch(s -> s.toLowerCase().contains("musl"));
-        } catch (IOException ignored) {
+        } catch (Exception ignored) {
+            // fall back to checking for alpine linux in the event we're using an older kernel which
+            // may not fail the above check
+            return isAlpineLinux();
+        }
+    }
+
+    private static boolean isAlpineLinux() {
+        try (Stream<String> osLines = Files.lines(Paths.get("/etc/os-release"))) {
+            return osLines.anyMatch(l -> l.startsWith("ID") && l.contains("alpine"));
+        } catch (Exception ignored2) {
         }
         return false;
     }
@@ -223,14 +235,14 @@ public class OSInfo {
             return "Windows";
         } else if (osName.contains("Mac") || osName.contains("Darwin")) {
             return "Mac";
+        } else if (osName.contains("AIX")) {
+            return "AIX";
         } else if (isMusl()) {
             return "Linux-Musl";
         } else if (isAndroid()) {
             return "Linux-Android";
         } else if (osName.contains("Linux")) {
             return "Linux";
-        } else if (osName.contains("AIX")) {
-            return "AIX";
         } else {
             return osName.replaceAll("\\W", "");
         }

@@ -343,4 +343,19 @@ public class QueryTest {
             if (conn != null) conn.close();
         }
     }
+
+    @Test
+    public void github720_Incorrect_Update_Count_After_Deleting_Many_Rows() throws Exception {
+        int size = 50000;
+        Connection conn = getConnection();
+        conn.createStatement().execute("drop table if exists test");
+        conn.createStatement().execute("create table test (id int not null)");
+        for (int i = 0; i < size; i++) {
+            conn.createStatement().execute("insert into test values(" + i + ")");
+        }
+        int deletedCount = conn.createStatement().executeUpdate("delete from test");
+        conn.close();
+
+        assertEquals(size, deletedCount);
+    }
 }
