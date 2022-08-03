@@ -154,8 +154,6 @@ jobs:
                 apk update
                 apk add maven openjdk${{ matrix.java }}-jdk openssl ca-certificates build-base bash jq wget unzip curl gnupg
                 echo "INSTALL JAVA HOME: $(dirname $(dirname $(readlink -f $(which javac))))"
-                echo "TTY: $(tty)"
-                echo "PATH: $PATH"
                 ;;
             esac
 
@@ -171,6 +169,7 @@ jobs:
           run: |
             echo "Architecture: `uname -a`"
             mvn --version
+            export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
             cd /work && make jni-header native && mvn --batch-mode --no-transfer-progress test
 
 #  release:
