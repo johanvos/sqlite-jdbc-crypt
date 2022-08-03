@@ -1,12 +1,15 @@
 include VERSION
 
 ifndef JAVA_HOME
-$(warning Set JAVA_HOME environment variable)
+$(warning It is preferable to set the JAVA_HOME environment variable)
+$(warning Trying to auto-detect JAVA_HOME)
+JAVA_HOME := $(shell dirname $(dirname $(readlink -f $(which javac))))
 endif
 
-JAVA  := "$$JAVA_HOME/bin/java"
-JAVAC := "$$JAVA_HOME/bin/javac" 
-JAVAH := "$$JAVA_HOME/bin/javah"
+$(info Using JAVA_HOME with value "$(JAVA_HOME)")
+JAVA  := "$(JAVA_HOME)/bin/java"
+JAVAC := "$(JAVA_HOME)/bin/javac"
+JAVAH := "$(JAVA_HOME)/bin/javah"
 
 TARGET := target
 OSINFO_CLASS := org.sqlite.util.OSInfo

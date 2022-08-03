@@ -148,15 +148,18 @@ jobs:
             case "${{ matrix.distro }}" in
               ubuntu*|jessie|stretch|buster|bullseye)
                 apt-get update -q -y
-                apt-get install -q -y maven openjdk-${{ matrix.java }}-jdk
+                apt-get install -q -y maven openjdk-${{ matrix.java }}-jdk openssl ca-certificates build-essential bash jq wget unzip curl gnupg
                 ;;
               alpine*)
                 apk update
-                apk add maven openjdk${{ matrix.java }}
+                apk add maven openjdk${{ matrix.java }}-jdk openssl ca-certificates build-base bash jq wget unzip curl gnupg
+                echo "INSTALL JAVA HOME: $(dirname $(dirname $(readlink -f $(which javac))))"
+                echo "TTY: $(tty)"
+                echo "PATH: $PATH"
                 ;;
             esac
 
-          # We use the Github Action user, 1001:121, so that maven can access
+          # We use the GitHub Action user, 1001:121, so that maven can access
           # the /work directory and create target/classes
           dockerRunArgs: |
             --volume "${PWD}:/work"
@@ -170,31 +173,31 @@ jobs:
             mvn --version
             cd /work && make jni-header native && mvn --batch-mode --no-transfer-progress test
 
-  release:
-    name: Deploy
-    needs: [ lint, test, test_graalvm, test_multiarch ]
-    if: github.ref == 'refs/heads/master' # only perform on latest master
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Apache Maven Central
-        uses: actions/setup-java@v2
-        with: # running setup-java again overwrites the settings.xml
-          distribution: 'temurin'
-          java-version: '8'
-          java-package: jdk
-          server-id: ossrh # Value of the distributionManagement/repository/id field of the pom.xml
-          server-username: MAVEN_CENTRAL_USERNAME # env variable for username in deploy (1)
-          server-password: MAVEN_CENTRAL_PASSWORD # env variable for token in deploy (2)
-          gpg-private-key: ${{ secrets.GPG_KEY }} # Value of the GPG private key to import
-          gpg-passphrase: MAVEN_CENTRAL_GPG_PASSPHRASE # env variable for GPG private key passphrase (3)
-      - name: Get Project Version
-        run: |
-          echo "PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
-      - name: Publish to Apache Maven Central
-        if: ${{ endsWith(env.PROJECT_VERSION, '-SNAPSHOT') }}
-        run: mvn --batch-mode --no-transfer-progress deploy -P release -DskipTests
-        env:
-          MAVEN_CENTRAL_USERNAME: ${{ secrets.SONATYPE_USERNAME }} # must be the same env variable name as (1)
-          MAVEN_CENTRAL_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }} # must be the same env variable name as (2)
-          MAVEN_CENTRAL_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }} # must be the same env variable name as (3)
+#  release:
+#    name: Deploy
+#    needs: [ lint, test, test_graalvm, test_multiarch ]
+#    if: github.ref == 'refs/heads/master' # only perform on latest master
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v3
+#      - name: Set up Apache Maven Central
+#        uses: actions/setup-java@v2
+#        with: # running setup-java again overwrites the settings.xml
+#          distribution: 'temurin'
+#          java-version: '8'
+#          java-package: jdk
+#          server-id: ossrh # Value of the distributionManagement/repository/id field of the pom.xml
+#          server-username: MAVEN_CENTRAL_USERNAME # env variable for username in deploy (1)
+#          server-password: MAVEN_CENTRAL_PASSWORD # env variable for token in deploy (2)
+#          gpg-private-key: ${{ secrets.GPG_KEY }} # Value of the GPG private key to import
+#          gpg-passphrase: MAVEN_CENTRAL_GPG_PASSPHRASE # env variable for GPG private key passphrase (3)
+#      - name: Get Project Version
+#        run: |
+#          echo "PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+#      - name: Publish to Apache Maven Central
+#        if: ${{ endsWith(env.PROJECT_VERSION, '-SNAPSHOT') }}
+#        run: mvn --batch-mode --no-transfer-progress deploy -P release -DskipTests
+#        env:
+#          MAVEN_CENTRAL_USERNAME: ${{ secrets.SONATYPE_USERNAME }} # must be the same env variable name as (1)
+#          MAVEN_CENTRAL_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }} # must be the same env variable name as (2)
+#          MAVEN_CENTRAL_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }} # must be the same env variable name as (3)
