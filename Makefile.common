@@ -38,12 +38,12 @@ endif
 sqlite := sqlite-$(version)
 
 ifdef JAVA_HOME
-jni_h := $(shell find -L "$(JAVA_HOME)" -name jni.h)
+jni_h := $(shell find "$(JAVA_HOME)" -name jni.h)
 ifneq ($(jni_h),)
 jni_include := $(shell dirname "$(jni_h)")
 endif
 
-jni_md := $(shell find -L "$(JAVA_HOME)" -name jni_md.h)
+jni_md := $(shell find "$(JAVA_HOME)" -name jni_md.h)
 ifneq ($(jni_md),)
 jni_md_include := $(shell dirname "$(jni_md)")
 endif

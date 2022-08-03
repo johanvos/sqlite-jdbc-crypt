@@ -152,7 +152,7 @@ jobs:
                 ;;
               alpine*)
                 apk update
-                apk add maven openjdk${{ matrix.java }}-jdk openssl ca-certificates build-base bash jq wget unzip curl gnupg
+                apk add maven openjdk${{ matrix.java }} openssl ca-certificates build-base bash jq wget unzip curl gnupg
                 echo "INSTALL JAVA HOME: $(dirname $(dirname $(readlink -f $(which javac))))"
                 ;;
             esac
