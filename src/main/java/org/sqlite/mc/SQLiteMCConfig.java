@@ -223,9 +223,9 @@ public class SQLiteMCConfig extends SQLiteConfig {
             ByteBuffer byteBuffer = ByteBuffer.wrap(key);
             StringBuilder hexString = new StringBuilder();
             while (byteBuffer.hasRemaining()) {
-                hexString.append(String.format("%02X ", byteBuffer.get()));
+                hexString.append(String.format("%02X", byteBuffer.get()));
             }
-            return withKey(hexString.toString());
+            return withHexKey(hexString.toString());
         }
 
         public Builder withHexKey(String hexkey) {
