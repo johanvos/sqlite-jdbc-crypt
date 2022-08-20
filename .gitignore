@@ -11,7 +11,7 @@ atlassian-ide-plugin.xml
 .project
 .settings/
 .DS_Store
-.class
+*.class
 
 *.so
 *.dll

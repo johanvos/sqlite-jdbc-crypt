@@ -26,8 +26,15 @@ SQLITE_INCLUDE := $(shell dirname "$(SQLITE_HEADER)")
 
 CCFLAGS:= -I$(SQLITE_OUT) -I$(SQLITE_INCLUDE) $(CCFLAGS)
 
+BUILDER_UID:="$(shell id -u )"
+BUILDER_GID:="$(shell id -g )"
+BUILDER_USER:="$(shell id -un )"
+BUILDER_GROUP:="$(shell id -gn )"
+
+
 $(SQLITE_ARCHIVE):
 	echo "Downloading Archive"
+	mkdir -p $(TARGET)
 	#curl -s https://api.github.com/repos/utelle/SQLite3MultipleCiphers/releases | jq -r ".[].assets[] | select(.name | contains(\"$(version)-amalgamation\")) | .created_at |= fromdateiso8601 | .browser_download_url" | head -1 | wget -O $@ -i -
 	#wget -O $@ https://github.com/utelle/SQLite3MultipleCiphers/releases/download/v$(sqliteMCVersion)/sqlite3mc-$(sqliteMCVersion)-sqlite-$(version)-amalgamation.zip
 	curl -SL "https://github.com/utelle/SQLite3MultipleCiphers/releases/download/v$(sqliteMCVersion)/sqlite3mc-$(sqliteMCVersion)-sqlite-$(version)-amalgamation.zip" >  $@
@@ -57,6 +64,7 @@ test:
 clean: clean-target clean-native clean-java clean-tests
 
 $(SQLITE_OUT)/sqlite3.o : $(SQLITE_UNPACKED)
+	id
 	@mkdir -p $(@D)
 	cp $(TARGET)/$(SQLITE_AMAL_PREFIX)/* $(SQLITE_OUT)/
 
@@ -139,8 +147,8 @@ native: $(NATIVE_DLL)
 $(NATIVE_DLL): $(SQLITE_OUT)/$(LIBNAME)
 	@mkdir -p $(@D)
 	cp $< $@
-	@mkdir -p $(NATIVE_TARGET_DIR)
-	cp $< $(NATIVE_TARGET_DIR)/$(LIBNAME)
+	#@mkdir -p $(NATIVE_TARGET_DIR)
+	#cp $< $(NATIVE_TARGET_DIR)/$(LIBNAME)
 
 DOCKER_RUN_OPTS=--rm
 
@@ -157,10 +165,10 @@ win-arm64: $(SQLITE_UNPACKED) jni-header
 	./docker/dockcross-windows-arm64 -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=aarch64-w64-mingw32- OS_NAME=Windows OS_ARCH=aarch64'
 
 linux32: $(SQLITE_UNPACKED) jni-header
-	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/work gillena/sqlite-build-env-i386 bash -c 'make clean-native native OS_NAME=Linux OS_ARCH=x86'
+	docker run $(DOCKER_RUN_OPTS) -u "$(BUILDER_UID):$(BUILDER_GID)" -v $$PWD:/work gillena/sqlite-build-env-i386 bash -c "make clean-native native OS_NAME=Linux OS_ARCH=x86" 
 
 linux64: $(SQLITE_UNPACKED) jni-header
-	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/work gillena/sqlite-build-env bash -c 'make clean-native native OS_NAME=Linux OS_ARCH=x86_64'
+	docker run $(DOCKER_RUN_OPTS) -u "$(BUILDER_UID):$(BUILDER_GID)" -v $$PWD:/work gillena/sqlite-build-env bash -c "make clean-native native OS_NAME=Linux OS_ARCH=x86_64"
 
 freebsd32: $(SQLITE_UNPACKED) jni-header
 	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/workdir empterdose/freebsd-cross-build:9.3 sh -c 'apk add bash; apk add openjdk8; apk add perl; make clean-native native OS_NAME=FreeBSD OS_ARCH=x86 CROSS_PREFIX=i386-freebsd9-'
@@ -172,7 +180,7 @@ freebsd-arm64: $(SQLITE_UNPACKED) jni-header
 	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/workdir gotson/freebsd-cross-build:aarch64-11.4 sh -c 'make clean-native native OS_NAME=FreeBSD OS_ARCH=aarch64 CROSS_PREFIX=aarch64-unknown-freebsd11-'
 
 alpine-linux64: $(SQLITE_UNPACKED) jni-header
-	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/work xerial/alpine-linux-x86_64 bash -c 'make clean-native native OS_NAME=Linux-Musl OS_ARCH=x86_64'
+	docker run $(DOCKER_RUN_OPTS) -u "$(BUILDER_UID):$(BUILDER_GID)" -v $$PWD:/work xerial/alpine-linux-x86_64 bash -c "make clean-native native OS_NAME=Linux-Musl OS_ARCH=x86_64"
 
 linux-musl-arm64: $(SQLITE_UNPACKED) jni-header
 	./docker/dockcross-musl-arm64 -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=aarch64-linux-musl- OS_NAME=Linux-Musl OS_ARCH=aarch64'
@@ -205,11 +213,11 @@ linux-ppc64: $(SQLITE_UNPACKED) jni-header
 	./docker/dockcross-ppc64 -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=powerpc64le-unknown-linux-gnu- OS_NAME=Linux OS_ARCH=ppc64'
 
 mac64: $(SQLITE_UNPACKED) jni-header
-	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/workdir -e CROSS_TRIPLE=x86_64-apple-darwin multiarch/crossbuild make clean-native native OS_NAME=Mac OS_ARCH=x86_64
+	docker run $(DOCKER_RUN_OPTS) -u "$(BUILDER_UID):$(BUILDER_GID)" -v $$PWD:/workdir -e CROSS_TRIPLE=x86_64-apple-darwin multiarch/crossbuild make clean-native native OS_NAME=Mac OS_ARCH=x86_64
 
 # deprecated
 mac32: $(SQLITE_UNPACKED) jni-header
-	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/workdir -e CROSS_TRIPLE=i386-apple-darwin multiarch/crossbuild make clean-native native OS_NAME=Mac OS_ARCH=x86
+	docker run $(DOCKER_RUN_OPTS) -u "$(BUILDER_UID):$(BUILDER_GID)" -v $$PWD:/workdir -e CROSS_TRIPLE=i386-apple-darwin multiarch/crossbuild make clean-native native OS_NAME=Mac OS_ARCH=x86
 
 sparcv9:
 	$(MAKE) native OS_NAME=SunOS OS_ARCH=sparcv9
