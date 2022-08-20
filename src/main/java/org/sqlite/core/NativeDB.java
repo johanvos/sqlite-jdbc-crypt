@@ -19,12 +19,17 @@ package org.sqlite.core;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import org.sqlite.*;
+import org.sqlite.BusyHandler;
+import org.sqlite.Collation;
+import org.sqlite.Function;
+import org.sqlite.ProgressHandler;
+import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteJDBCLoader;
 
 /** This class provides a thin JNI layer over the SQLite3 C API. */
 public final class NativeDB extends DB {
     /** SQLite connection handle. */
-    long pointer = 0;
+    private long pointer = 0;
 
     private static boolean isLoaded;
     private static boolean loadSucceeded;
@@ -51,18 +56,15 @@ public final class NativeDB extends DB {
      * @return True if the SQLite JDBC driver is successfully loaded; false otherwise.
      */
     public static boolean load() throws Exception {
-        if (isLoaded) return loadSucceeded == true;
+        if (isLoaded) return loadSucceeded;
 
-        loadSucceeded = SQLiteJDBCLoader.initialize();
-        isLoaded = true;
+        try {
+            loadSucceeded = SQLiteJDBCLoader.initialize();
+        } finally {
+            isLoaded = true;
+        }
         return loadSucceeded;
     }
-
-    /** linked list of all instanced UDFDatas */
-    private final long udfdatalist = 0;
-
-    /** linked list of all instanced CollationData */
-    private final long colldatalist = 0;
 
     // WRAPPER FUNCTIONS ////////////////////////////////////////////
 
@@ -102,14 +104,17 @@ public final class NativeDB extends DB {
     @Override
     public synchronized native void busy_timeout(int ms);
 
+    /** busy handler pointer to JNI global busyhandler reference. */
+    private long busyHandler = 0;
+
     /** @see org.sqlite.core.DB#busy_handler(BusyHandler) */
     @Override
     public synchronized native void busy_handler(BusyHandler busyHandler);
 
     /** @see org.sqlite.core.DB#prepare(java.lang.String) */
     @Override
-    protected synchronized long prepare(String sql) throws SQLException {
-        return prepare_utf8(stringToUtf8ByteArray(sql));
+    protected synchronized SafeStmtPtr prepare(String sql) throws SQLException {
+        return new SafeStmtPtr(this, prepare_utf8(stringToUtf8ByteArray(sql)));
     }
 
     synchronized native long prepare_utf8(byte[] sqlUtf8) throws SQLException;
@@ -132,11 +137,11 @@ public final class NativeDB extends DB {
 
     /** @see org.sqlite.core.DB#changes() */
     @Override
-    public synchronized native int changes();
+    public synchronized native long changes();
 
     /** @see org.sqlite.core.DB#total_changes() */
     @Override
-    public synchronized native int total_changes();
+    public synchronized native long total_changes();
 
     /** @see org.sqlite.core.DB#finalize(long) */
     @Override
@@ -308,43 +313,48 @@ public final class NativeDB extends DB {
 
     /** @see org.sqlite.core.DB#create_function(java.lang.String, org.sqlite.Function, int, int) */
     @Override
-    public synchronized int create_function(String name, Function func, int nArgs, int flags) {
-        return create_function_utf8(stringToUtf8ByteArray(name), func, nArgs, flags);
+    public synchronized int create_function(String name, Function func, int nArgs, int flags)
+            throws SQLException {
+        return create_function_utf8(nameToUtf8ByteArray("function", name), func, nArgs, flags);
     }
 
     synchronized native int create_function_utf8(
             byte[] nameUtf8, Function func, int nArgs, int flags);
 
-    /** @see org.sqlite.core.DB#destroy_function(java.lang.String, int) */
+    /** @see org.sqlite.core.DB#destroy_function(java.lang.String) */
     @Override
-    public synchronized int destroy_function(String name, int nArgs) {
-        return destroy_function_utf8(stringToUtf8ByteArray(name), nArgs);
+    public synchronized int destroy_function(String name) throws SQLException {
+        return destroy_function_utf8(nameToUtf8ByteArray("function", name));
     }
 
-    synchronized native int destroy_function_utf8(byte[] nameUtf8, int nArgs);
+    synchronized native int destroy_function_utf8(byte[] nameUtf8);
 
     /** @see org.sqlite.core.DB#create_collation(String, Collation) */
     @Override
-    public synchronized int create_collation(String name, Collation coll) {
-        return create_collation_utf8(stringToUtf8ByteArray(name), coll);
+    public synchronized int create_collation(String name, Collation coll) throws SQLException {
+        return create_collation_utf8(nameToUtf8ByteArray("collation", name), coll);
     }
 
     synchronized native int create_collation_utf8(byte[] nameUtf8, Collation coll);
 
     /** @see org.sqlite.core.DB#destroy_collation(String) */
     @Override
-    public synchronized int destroy_collation(String name) {
-        return destroy_collation_utf8(stringToUtf8ByteArray(name));
+    public synchronized int destroy_collation(String name) throws SQLException {
+        return destroy_collation_utf8(nameToUtf8ByteArray("collation", name));
     }
 
     synchronized native int destroy_collation_utf8(byte[] nameUtf8);
 
-    /** @see org.sqlite.core.DB#free_functions() */
-    @Override
-    synchronized native void free_functions();
-
     @Override
     public synchronized native int limit(int id, int value) throws SQLException;
+
+    private byte[] nameToUtf8ByteArray(String nameType, String name) throws SQLException {
+        final byte[] nameUtf8 = stringToUtf8ByteArray(name);
+        if (name == null || "".equals(name) || nameUtf8.length > 255) {
+            throw new SQLException("invalid " + nameType + " name: '" + name + "'");
+        }
+        return nameUtf8;
+    }
 
     /**
      * @see org.sqlite.core.DB#backup(java.lang.String, java.lang.String,
@@ -390,17 +400,23 @@ public final class NativeDB extends DB {
     @Override
     synchronized native boolean[][] column_metadata(long stmt);
 
+    // pointer to commit listener structure, if enabled.
+    private long commitListener = 0;
+
     @Override
     synchronized native void set_commit_listener(boolean enabled);
+
+    // pointer to update listener structure, if enabled.
+    private long updateListener = 0;
 
     @Override
     synchronized native void set_update_listener(boolean enabled);
 
     /**
-     * Throws an SQLException
+     * Throws an SQLException. Called from native code
      *
      * @param msg Message for the SQLException.
-     * @throws SQLException
+     * @throws SQLException the generated SQLException
      */
     static void throwex(String msg) throws SQLException {
         throw new SQLException(msg);
@@ -422,8 +438,47 @@ public final class NativeDB extends DB {
         return new String(buff, StandardCharsets.UTF_8);
     }
 
+    /** handler pointer to JNI global progressHandler reference. */
+    private long progressHandler;
+
     public synchronized native void register_progress_handler(
             int vmCalls, ProgressHandler progressHandler) throws SQLException;
 
     public synchronized native void clear_progress_handler() throws SQLException;
+
+    /**
+     * Getter for native pointer to validate memory is properly cleaned up in unit tests
+     *
+     * @return a native pointer to validate memory is properly cleaned up in unit tests
+     */
+    long getBusyHandler() {
+        return busyHandler;
+    }
+
+    /**
+     * Getter for native pointer to validate memory is properly cleaned up in unit tests
+     *
+     * @return a native pointer to validate memory is properly cleaned up in unit tests
+     */
+    long getCommitListener() {
+        return commitListener;
+    }
+
+    /**
+     * Getter for native pointer to validate memory is properly cleaned up in unit tests
+     *
+     * @return a native pointer to validate memory is properly cleaned up in unit tests
+     */
+    long getUpdateListener() {
+        return updateListener;
+    }
+
+    /**
+     * Getter for native pointer to validate memory is properly cleaned up in unit tests
+     *
+     * @return a native pointer to validate memory is properly cleaned up in unit tests
+     */
+    long getProgressHandler() {
+        return progressHandler;
+    }
 }
