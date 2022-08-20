@@ -25,7 +25,7 @@ import org.sqlite.core.DB;
  *
  * <p>A subclass of <tt>org.sqlite.Function</tt> can be registered with <tt>Function.create()</tt>
  * and called by the name it was given. All functions must implement <tt>xFunc()</tt>, which is
- * called when SQLite runs the custom function. Eg.
+ * called when SQLite runs the custom function. E.g.
  *
  * <pre>
  *      Class.forName("org.sqlite.JDBC");
@@ -42,10 +42,8 @@ import org.sqlite.core.DB;
  *
  * <p>Arguments passed to a custom function can be accessed using the <tt>protected</tt> functions
  * provided. <tt>args()</tt> returns the number of arguments passed, while
- * <tt>value_&lt;type&gt;(int)</tt> returns the value of the specific argument. Similarly a function
- * can return a value using the <tt>result(&lt;type&gt;)</tt> function.
- *
- * <p>Aggregate functions are not yet supported, but coming soon.
+ * <tt>value_&lt;type&gt;(int)</tt> returns the value of the specific argument. Similarly, a
+ * function can return a value using the <tt>result(&lt;type&gt;)</tt> function.
  */
 public abstract class Function {
     /**
@@ -68,7 +66,7 @@ public abstract class Function {
      * @param name The name of the function.
      * @param f The function to register.
      */
-    public static final void create(Connection conn, String name, Function f) throws SQLException {
+    public static void create(Connection conn, String name, Function f) throws SQLException {
         create(conn, name, f, 0);
     }
 
@@ -80,7 +78,7 @@ public abstract class Function {
      * @param f The function to register.
      * @param flags Extra flags to pass, such as {@link #FLAG_DETERMINISTIC}
      */
-    public static final void create(Connection conn, String name, Function f, int flags)
+    public static void create(Connection conn, String name, Function f, int flags)
             throws SQLException {
         create(conn, name, f, -1, flags);
     }
@@ -94,9 +92,9 @@ public abstract class Function {
      * @param nArgs The number of arguments that the function takes.
      * @param flags Extra flags to pass, such as {@link #FLAG_DETERMINISTIC}
      */
-    public static final void create(Connection conn, String name, Function f, int nArgs, int flags)
+    public static void create(Connection conn, String name, Function f, int nArgs, int flags)
             throws SQLException {
-        if (conn == null || !(conn instanceof SQLiteConnection)) {
+        if (!(conn instanceof SQLiteConnection)) {
             throw new SQLException("connection must be to an SQLite db");
         }
         if (conn.isClosed()) {
@@ -110,10 +108,6 @@ public abstract class Function {
             throw new SQLException("invalid args provided: " + nArgs);
         }
 
-        if (name == null || name.length() > 255) {
-            throw new SQLException("invalid function name: '" + name + "'");
-        }
-
         if (f.db.create_function(name, f, nArgs, flags) != Codes.SQLITE_OK) {
             throw new SQLException("error creating function");
         }
@@ -124,14 +118,14 @@ public abstract class Function {
      *
      * @param conn The connection to remove the function from.
      * @param name The name of the function.
-     * @param nArgs The number of args for the function.
+     * @param nArgs Ignored.
      * @throws SQLException
      */
-    public static final void destroy(Connection conn, String name, int nArgs) throws SQLException {
-        if (conn == null || !(conn instanceof SQLiteConnection)) {
+    public static void destroy(Connection conn, String name, int nArgs) throws SQLException {
+        if (!(conn instanceof SQLiteConnection)) {
             throw new SQLException("connection must be to an SQLite db");
         }
-        ((SQLiteConnection) conn).getDatabase().destroy_function(name, nArgs);
+        ((SQLiteConnection) conn).getDatabase().destroy_function(name);
     }
 
     /**
@@ -141,7 +135,7 @@ public abstract class Function {
      * @param name The name of the function.
      * @throws SQLException
      */
-    public static final void destroy(Connection conn, String name) throws SQLException {
+    public static void destroy(Connection conn, String name) throws SQLException {
         destroy(conn, name, -1);
     }
 

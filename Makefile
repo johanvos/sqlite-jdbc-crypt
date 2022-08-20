@@ -79,7 +79,6 @@ $(SQLITE_OUT)/sqlite3.o : $(SQLITE_UNPACKED)
 	$(CC) -o $@ -c $(CCFLAGS) \
 	-DSQLITE_ENABLE_LOAD_EXTENSION=1 \
 	-DSQLITE_HAVE_ISNAN \
-	-DSQLITE_HAVE_USLEEP \
 	-DHAVE_USLEEP=1 \
     -DSQLITE_ENABLE_COLUMN_METADATA \
     -DSQLITE_CORE \
@@ -89,6 +88,7 @@ $(SQLITE_OUT)/sqlite3.o : $(SQLITE_UNPACKED)
     -DSQLITE_ENABLE_RTREE \
     -DSQLITE_ENABLE_JSON1 \
 	-DSQLITE_ENABLE_STAT4 \
+	-DSQLITE_ENABLE_DBSTAT_VTAB \
 	-DSQLITE_THREADSAFE=1 \
 	-DSQLITE_DEFAULT_MEMSTATUS=0 \
 	-DSQLITE_DEFAULT_FILE_PERMISSIONS=0666 \
@@ -165,7 +165,7 @@ win-arm64: $(SQLITE_UNPACKED) jni-header
 	./docker/dockcross-windows-arm64 -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=aarch64-w64-mingw32- OS_NAME=Windows OS_ARCH=aarch64'
 
 linux32: $(SQLITE_UNPACKED) jni-header
-	docker run $(DOCKER_RUN_OPTS) -u "$(BUILDER_UID):$(BUILDER_GID)" -v $$PWD:/work gillena/sqlite-build-env-i386 bash -c "make clean-native native OS_NAME=Linux OS_ARCH=x86" 
+	docker run $(DOCKER_RUN_OPTS) -u "$(BUILDER_UID):$(BUILDER_GID)" -v $$PWD:/work gillena/sqlite-build-env-i386 bash -c "make clean-native native OS_NAME=Linux OS_ARCH=x86"
 
 linux64: $(SQLITE_UNPACKED) jni-header
 	docker run $(DOCKER_RUN_OPTS) -u "$(BUILDER_UID):$(BUILDER_GID)" -v $$PWD:/work gillena/sqlite-build-env bash -c "make clean-native native OS_NAME=Linux OS_ARCH=x86_64"

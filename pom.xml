@@ -116,18 +116,6 @@
             </plugin>
 
             <plugin>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.1</version>
-                <configuration>
-                    <!--  do not run site-deploy goal, included in the default settings  -->
-                    <goals>deploy</goals>
-                    <pushChanges>false</pushChanges>
-                    <localCheckout>true</localCheckout>
-                    <connectionUrl>scm:git:ssh://git@github.com:Willena/sqlite-jdbc-crypt.git</connectionUrl>
-                </configuration>
-            </plugin>
-
-            <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.2.0</version>
                 <configuration>
@@ -192,7 +180,7 @@
                     <executions>
                         <execution>
                             <!-- Need to have MANIFEST.MF in place before
-                                                packaging, so unit-tests will work -->
+                                  packaging, so unit-tests will work -->
                             <phase>process-classes</phase>
                             <goals>
                                 <goal>manifest</goal>
@@ -263,6 +251,14 @@
                             <additionalOptions>-Xdoclint:none</additionalOptions>
                             <additionalJOption>-Xdoclint:none</additionalJOption>
                         </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>

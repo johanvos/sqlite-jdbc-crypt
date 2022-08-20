@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.InputStream;
 import java.sql.Connection;
@@ -20,7 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -35,7 +35,7 @@ public class DBMetaDataTest {
         conn = DriverManager.getConnection("jdbc:sqlite:");
         stat = conn.createStatement();
         stat.executeUpdate(
-                "create table test (id integer primary key, fn float default 0.0, sn not null);");
+                "create table test (id integer primary key, fn float default 0.0, sn not null, intvalue integer(5), realvalue real(8,3));");
         stat.executeUpdate("create view testView as select * from test;");
         meta = conn.getMetaData();
     }
@@ -129,6 +129,8 @@ public class DBMetaDataTest {
         assertEquals(rs.getString("IS_NULLABLE"), "YES");
         assertNull(rs.getString("COLUMN_DEF"));
         assertEquals(rs.getInt("DATA_TYPE"), Types.INTEGER);
+        assertEquals(rs.getInt("COLUMN_SIZE"), 2000000000);
+        assertEquals(rs.getInt("DECIMAL_DIGITS"), 0);
         assertEquals(rs.getString("IS_AUTOINCREMENT"), "NO");
         assertFalse(rs.next());
 
@@ -138,6 +140,8 @@ public class DBMetaDataTest {
         assertEquals(rs.getInt("DATA_TYPE"), Types.FLOAT);
         assertEquals(rs.getString("IS_NULLABLE"), "YES");
         assertEquals(rs.getString("COLUMN_DEF"), "0.0");
+        assertEquals(rs.getInt("COLUMN_SIZE"), 2000000000);
+        assertEquals(rs.getInt("DECIMAL_DIGITS"), 10);
         assertEquals(rs.getString("IS_AUTOINCREMENT"), "NO");
         assertFalse(rs.next());
 
@@ -145,6 +149,28 @@ public class DBMetaDataTest {
         assertTrue(rs.next());
         assertEquals(rs.getString("COLUMN_NAME"), "sn");
         assertEquals(rs.getString("IS_NULLABLE"), "NO");
+        assertEquals(rs.getInt("COLUMN_SIZE"), 2000000000);
+        assertEquals(rs.getInt("DECIMAL_DIGITS"), 10);
+        assertNull(rs.getString("COLUMN_DEF"));
+        assertFalse(rs.next());
+
+        rs = meta.getColumns(null, null, "test", "intvalue");
+        assertTrue(rs.next());
+        assertEquals(rs.getString("COLUMN_NAME"), "intvalue");
+        assertEquals(rs.getInt("DATA_TYPE"), Types.INTEGER);
+        assertEquals(rs.getString("IS_NULLABLE"), "YES");
+        assertEquals(rs.getInt("COLUMN_SIZE"), 5);
+        assertEquals(rs.getInt("DECIMAL_DIGITS"), 0);
+        assertNull(rs.getString("COLUMN_DEF"));
+        assertFalse(rs.next());
+
+        rs = meta.getColumns(null, null, "test", "realvalue");
+        assertTrue(rs.next());
+        assertEquals(rs.getString("COLUMN_NAME"), "realvalue");
+        assertEquals(rs.getInt("DATA_TYPE"), Types.FLOAT);
+        assertEquals(rs.getString("IS_NULLABLE"), "YES");
+        assertEquals(rs.getInt("COLUMN_SIZE"), 11);
+        assertEquals(rs.getInt("DECIMAL_DIGITS"), 3);
         assertNull(rs.getString("COLUMN_DEF"));
         assertFalse(rs.next());
 
@@ -155,6 +181,10 @@ public class DBMetaDataTest {
         assertEquals(rs.getString("COLUMN_NAME"), "fn");
         assertTrue(rs.next());
         assertEquals(rs.getString("COLUMN_NAME"), "sn");
+        assertTrue(rs.next());
+        assertEquals(rs.getString("COLUMN_NAME"), "intvalue");
+        assertTrue(rs.next());
+        assertEquals(rs.getString("COLUMN_NAME"), "realvalue");
         assertFalse(rs.next());
 
         rs = meta.getColumns(null, null, "test", "%n");
@@ -175,6 +205,12 @@ public class DBMetaDataTest {
         assertTrue(rs.next());
         assertEquals(rs.getString("TABLE_NAME"), "test");
         assertEquals(rs.getString("COLUMN_NAME"), "sn");
+        assertTrue(rs.next());
+        assertEquals(rs.getString("TABLE_NAME"), "test");
+        assertEquals(rs.getString("COLUMN_NAME"), "intvalue");
+        assertTrue(rs.next());
+        assertEquals(rs.getString("TABLE_NAME"), "test");
+        assertEquals(rs.getString("COLUMN_NAME"), "realvalue");
         // VIEW "testView"
         assertTrue(rs.next());
         assertEquals(rs.getString("TABLE_NAME"), "testView");
@@ -185,6 +221,12 @@ public class DBMetaDataTest {
         assertTrue(rs.next());
         assertEquals(rs.getString("TABLE_NAME"), "testView");
         assertEquals(rs.getString("COLUMN_NAME"), "sn");
+        assertTrue(rs.next());
+        assertEquals(rs.getString("TABLE_NAME"), "testView");
+        assertEquals(rs.getString("COLUMN_NAME"), "intvalue");
+        assertTrue(rs.next());
+        assertEquals(rs.getString("TABLE_NAME"), "testView");
+        assertEquals(rs.getString("COLUMN_NAME"), "realvalue");
         assertFalse(rs.next());
 
         rs = meta.getColumns(null, null, "%", "%");
@@ -196,6 +238,10 @@ public class DBMetaDataTest {
         assertEquals(rs.getString("COLUMN_NAME"), "fn");
         assertTrue(rs.next());
         assertEquals(rs.getString("COLUMN_NAME"), "sn");
+        assertTrue(rs.next());
+        assertEquals(rs.getString("COLUMN_NAME"), "intvalue");
+        assertTrue(rs.next());
+        assertEquals(rs.getString("COLUMN_NAME"), "realvalue");
         // VIEW "testView"
         assertTrue(rs.next());
         assertEquals(rs.getString("TABLE_NAME"), "testView");
@@ -204,11 +250,29 @@ public class DBMetaDataTest {
         assertEquals(rs.getString("COLUMN_NAME"), "fn");
         assertTrue(rs.next());
         assertEquals(rs.getString("COLUMN_NAME"), "sn");
+        assertTrue(rs.next());
+        assertEquals(rs.getString("COLUMN_NAME"), "intvalue");
+        assertTrue(rs.next());
+        assertEquals(rs.getString("COLUMN_NAME"), "realvalue");
         assertFalse(rs.next());
 
         rs = meta.getColumns(null, null, "doesnotexist", "%");
         assertFalse(rs.next());
         assertEquals(24, rs.getMetaData().getColumnCount());
+    }
+
+    @Test
+    public void getColumnsIncludingGenerated() throws SQLException {
+        stat.executeUpdate("create table gh_724 (i integer,j integer generated always as (i))");
+
+        ResultSet rs = meta.getColumns(null, null, "gh_724", "%");
+        assertTrue(rs.next());
+        assertEquals("i", rs.getString(4), "first column is named 'i'");
+        assertEquals("NO", rs.getString(24), "first column is not generated");
+        assertTrue(rs.next());
+        assertEquals("j", rs.getString(4), "second column is named 'j'");
+        assertEquals("YES", rs.getString(24), "second column is generated");
+        assertFalse(rs.next());
     }
 
     @Test
@@ -670,6 +734,26 @@ public class DBMetaDataTest {
     }
 
     @Test
+    public void getImportedKeysWithIncorrectReference() throws SQLException {
+
+        stat.executeUpdate(
+                "create table child (id1 integer, id2 integer, foreign key(id1) references parent(id1))");
+
+        try (ResultSet importedKeys = meta.getImportedKeys(null, null, "child")) {
+            assertTrue(importedKeys.next());
+
+            assertEquals("parent", importedKeys.getString("PKTABLE_NAME"));
+            assertEquals("id1", importedKeys.getString("PKCOLUMN_NAME"));
+            assertNotNull(importedKeys.getString("PK_NAME"));
+            assertNotNull(importedKeys.getString("FK_NAME"));
+            assertEquals("child", importedKeys.getString("FKTABLE_NAME"));
+            assertEquals("id1", importedKeys.getString("FKCOLUMN_NAME"));
+
+            assertFalse(importedKeys.next());
+        }
+    }
+
+    @Test
     public void columnOrderOfgetTables() throws SQLException {
 
         stat.executeUpdate(
@@ -1106,7 +1190,7 @@ public class DBMetaDataTest {
     private void assertPrimaryKey(
             DatabaseMetaData meta, String tableName, String pkName, String... pkColumns)
             throws Exception {
-        final Map<String, Integer> colSeq = new HashMap<String, Integer>();
+        final Map<String, Integer> colSeq = new HashMap<>();
         for (int i = 0; i < pkColumns.length; i++) {
             colSeq.put(pkColumns[i], i + 1);
         }
@@ -1211,7 +1295,7 @@ public class DBMetaDataTest {
 
         ResultSet cr = meta.getCrossReference(null, null, "person", null, null, "address");
         // assertTrue(cr.next());
-
+        // TODO: unfinished business
     }
 
     /* TODO
@@ -1286,12 +1370,15 @@ public class DBMetaDataTest {
 
     @Test
     public void version() throws Exception {
+        assumeTrue(
+                Utils.getCompileOptions(conn).contains("JDBC_EXTENSIONS"),
+                "Can't check the version if not compiled by us");
         Properties version;
         try (InputStream resourceAsStream =
                 DBMetaDataTest.class.getResourceAsStream(
                         "/META-INF/maven/org.xerial/sqlite-jdbc/VERSION")) {
             version = new Properties();
-            Assumptions.assumeTrue(resourceAsStream != null);
+            assumeTrue(resourceAsStream != null);
             version.load(resourceAsStream);
         }
         String versionString = version.getProperty("version");

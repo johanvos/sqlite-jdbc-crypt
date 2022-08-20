@@ -140,7 +140,7 @@ public abstract class DB implements Codes {
      * @see <a
      *     href="http://www.sqlite.org/c3ref/changes.html">http://www.sqlite.org/c3ref/changes.html</a>
      */
-    public abstract int changes() throws SQLException;
+    public abstract long changes() throws SQLException;
 
     /**
      * @return Number of row changes caused by INSERT, UPDATE or DELETE statements since the
@@ -149,7 +149,7 @@ public abstract class DB implements Codes {
      * @see <a
      *     href="http://www.sqlite.org/c3ref/total_changes.html">http://www.sqlite.org/c3ref/total_changes.html</a>
      */
-    public abstract int total_changes() throws SQLException;
+    public abstract long total_changes() throws SQLException;
 
     /**
      * Enables or disables the sharing of the database cache and schema data structures between
@@ -237,9 +237,6 @@ public abstract class DB implements Codes {
         for (SafeStmtPtr element : stmts) {
             element.close();
         }
-
-        // remove memory used by user-defined functions
-        free_functions();
 
         // clean up commit object
         if (begin != null) begin.close();
@@ -732,7 +729,7 @@ public abstract class DB implements Codes {
      * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">Result Codes</a>
      * @throws SQLException
      */
-    public abstract int destroy_function(String name, int nArgs) throws SQLException;
+    public abstract int destroy_function(String name) throws SQLException;
 
     /**
      * Create a user defined collation with given collation name and the collation object.
@@ -754,13 +751,6 @@ public abstract class DB implements Codes {
      * @throws SQLException
      */
     public abstract int destroy_collation(String name) throws SQLException;
-
-    /**
-     * Unused as we use the user_data pointer to store a single word.
-     *
-     * @throws SQLException
-     */
-    abstract void free_functions() throws SQLException;
 
     /**
      * @param dbName Database name to be backed up.
@@ -877,13 +867,13 @@ public abstract class DB implements Codes {
      *     commands execute successfully;
      * @throws SQLException if statement is not open or is being used elsewhere
      */
-    final synchronized int[] executeBatch(
+    final synchronized long[] executeBatch(
             SafeStmtPtr stmt, int count, Object[] vals, boolean autoCommit) throws SQLException {
         return stmt.safeRun((db, ptr) -> this.executeBatch(ptr, count, vals, autoCommit));
     }
 
-    private synchronized int[] executeBatch(long stmt, int count, Object[] vals, boolean autoCommit)
-            throws SQLException {
+    private synchronized long[] executeBatch(
+            long stmt, int count, Object[] vals, boolean autoCommit) throws SQLException {
         if (count < 1) {
             throw new SQLException("count (" + count + ") < 1");
         }
@@ -891,7 +881,7 @@ public abstract class DB implements Codes {
         final int params = bind_parameter_count(stmt);
 
         int rc;
-        int[] changes = new int[count];
+        long[] changes = new long[count];
 
         try {
             for (int i = 0; i < count; i++) {
@@ -908,7 +898,11 @@ public abstract class DB implements Codes {
                     reset(stmt);
                     if (rc == SQLITE_ROW) {
                         throw new BatchUpdateException(
-                                "batch entry " + i + ": query returns results", changes);
+                                "batch entry " + i + ": query returns results",
+                                null,
+                                0,
+                                changes,
+                                null);
                     }
                     throwex(rc);
                 }
@@ -1010,7 +1004,7 @@ public abstract class DB implements Codes {
      *     completed SQL.
      * @throws SQLException
      */
-    public final synchronized int executeUpdate(CoreStatement stmt, Object[] vals)
+    public final synchronized long executeUpdate(CoreStatement stmt, Object[] vals)
             throws SQLException {
         try {
             if (execute(stmt, vals)) {

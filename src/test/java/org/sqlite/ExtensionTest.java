@@ -2,7 +2,7 @@ package org.sqlite;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -64,33 +64,25 @@ public class ExtensionTest {
 
     @Test
     public void extFunctions() throws Exception {
-        {
-            ResultSet rs = stat.executeQuery("pragma compile_options");
-            boolean hasJdbcExtensions = false;
-            while (rs.next()) {
-                String compileOption = rs.getString(1);
-                if (compileOption.equals("JDBC_EXTENSIONS")) {
-                    hasJdbcExtensions = true;
-                    break;
-                }
-            }
-            rs.close();
-            // SQLite has to be compiled with JDBC Extensions for this test to
-            // continue.
-            assumeTrue(hasJdbcExtensions);
-        }
-        {
-            ResultSet rs = stat.executeQuery("select cos(radians(45))");
-            assertTrue(rs.next());
-            assertEquals(0.707106781186548, rs.getDouble(1), 0.000000000000001);
-            rs.close();
-        }
+        Utils.assumeJdbcExtensions(conn);
 
         {
             ResultSet rs = stat.executeQuery("select reverse('ACGT')");
             assertTrue(rs.next());
             assertEquals("TGCA", rs.getString(1));
             rs.close();
+        }
+    }
+
+    @Test
+    public void dbstat() throws Exception {
+        assumeTrue(
+                Utils.getCompileOptions(conn).contains("ENABLE_DBSTAT_VTAB"),
+                "SQLite has to be compiled with ENABLE_DBSTAT_VTAB");
+
+        {
+            boolean result = stat.execute("SELECT * FROM dbstat");
+            assertTrue(result);
         }
     }
 }
