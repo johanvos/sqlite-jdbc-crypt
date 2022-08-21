@@ -29,6 +29,8 @@ jobs:
         run: echo $sqliteMCVersion $version $artifactVersion
 
       - name: Build binaries, test, and package
+        env:
+          OCI_EXE: docker
         run: make all
       - name: Package DLL binaries
         run: zip -r ./sqlite-natives-$artifactVersion.zip ./src/main/resources/org/sqlite/native
