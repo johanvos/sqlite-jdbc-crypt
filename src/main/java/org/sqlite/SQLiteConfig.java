@@ -236,10 +236,6 @@ public class SQLiteConfig {
                     stat.execute(String.format("pragma %s=%s", key, value));
                 }
             }
-        } finally {
-            if (stat != null) {
-                stat.close();
-            }
         }
     }
 
@@ -510,7 +506,7 @@ public class SQLiteConfig {
         PASSWORD("password", null),
 
         // extensions: "fake" pragmas to allow conformance with JDBC
-        JDBC_EXPLICIT_READONLY("jdbc.explicit_readonly");
+        JDBC_EXPLICIT_READONLY("jdbc.explicit_readonly"),
 
         // New pragmas for SQLiteMC improved support
         KEY("key", null),
