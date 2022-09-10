@@ -70,11 +70,17 @@ $(SQLITE_OUT)/sqlite3.o : $(SQLITE_UNPACKED)
 	@mkdir -p $(@D)
 	cp $(TARGET)/$(SQLITE_AMAL_PREFIX)/* $(SQLITE_OUT)/
 
+
+#	perl -p -e "s/sqlite3_api;/sqlite3_api = 0;/g" \
+	    $(SQLITE_SOURCE)/sqlite3ext.h > $(SQLITE_OUT)/sqlite3ext.h
 # insert a code for loading extension functions
-# perl -p -e "s/^opendb_out:/  if(!db->mallocFailed && rc==SQLITE_OK){ rc = RegisterExtensionFunctions(db); }\nopendb_out:/;" $(SQLITE_SOURCE)/sqlite3.c > $(SQLITE_OUT)/sqlite3.c.tmp
+#	perl -p -e "s/^opendb_out:/  if(!db->mallocFailed && rc==SQLITE_OK){ rc = RegisterExtensionFunctions(db); }\nopendb_out:/;" \
+	    $(SQLITE_SOURCE)/sqlite3mc_amalgamation.c > $(SQLITE_OUT)/sqlite3mc_amalgamation.c.tmp
 # register compile option 'JDBC_EXTENSIONS'
-#	perl -p -e "s/#if SQLITE_LIKE_DOESNT_MATCH_BLOBS/  \"JDBC_EXTENSIONS\",\n#if SQLITE_LIKE_DOESNT_MATCH_BLOBS/;" $(SQLITE_OUT)/sqlite3.c.tmp > $(SQLITE_OUT)/sqlite3.c
-# 	cat src/main/ext/*.c >> $(SQLITE_OUT)/sqlite3.c
+# limits defined here: https://www.sqlite.org/limits.html
+#	perl -p -e "s/^(static const char \* const sqlite3azCompileOpt.+)$$/\1\n\n\/* This has been automatically added by sqlite-jdbc *\/\n  \"JDBC_EXTENSIONS\",/;" \
+	    $(SQLITE_OUT)/sqlite3mc_amalgamation.c.tmp > $(SQLITE_OUT)/sqlite3mc_amalgamation.c
+#	cat src/main/ext/*.c >> $(SQLITE_OUT)/sqlite3mc_amalgamation.c
 
 	$(CC) -v
 
@@ -82,13 +88,13 @@ $(SQLITE_OUT)/sqlite3.o : $(SQLITE_UNPACKED)
 	-DSQLITE_ENABLE_LOAD_EXTENSION=1 \
 	-DSQLITE_HAVE_ISNAN \
 	-DHAVE_USLEEP=1 \
-    -DSQLITE_ENABLE_COLUMN_METADATA \
-    -DSQLITE_CORE \
-    -DSQLITE_ENABLE_FTS3 \
-    -DSQLITE_ENABLE_FTS3_PARENTHESIS \
-    -DSQLITE_ENABLE_FTS5 \
-    -DSQLITE_ENABLE_RTREE \
-    -DSQLITE_ENABLE_JSON1 \
+	-DSQLITE_ENABLE_COLUMN_METADATA \
+	-DSQLITE_CORE \
+	-DSQLITE_ENABLE_FTS3 \
+	-DSQLITE_ENABLE_FTS3_PARENTHESIS \
+	-DSQLITE_ENABLE_FTS5 \
+	-DSQLITE_ENABLE_RTREE \
+	-DSQLITE_ENABLE_JSON1 \
 	-DSQLITE_ENABLE_STAT4 \
 	-DSQLITE_ENABLE_DBSTAT_VTAB \
 	-DSQLITE_THREADSAFE=1 \
@@ -96,12 +102,12 @@ $(SQLITE_OUT)/sqlite3.o : $(SQLITE_UNPACKED)
 	-DSQLITE_DEFAULT_FILE_PERMISSIONS=0666 \
 	-DSQLITE_MAX_VARIABLE_NUMBER=250000 \
 	-DSQLITE_MAX_MMAP_SIZE=1099511627776 \
-    -DSQLITE_MAX_LENGTH=2147483647 \
-    -DSQLITE_MAX_COLUMN=32767 \
-    -DSQLITE_MAX_SQL_LENGTH=1073741824 \
-    -DSQLITE_MAX_FUNCTION_ARG=127 \
-    -DSQLITE_MAX_ATTACHED=125 \
-    -DSQLITE_MAX_PAGE_COUNT=4294967294 \
+	-DSQLITE_MAX_LENGTH=2147483647 \
+	-DSQLITE_MAX_COLUMN=32767 \
+	-DSQLITE_MAX_SQL_LENGTH=1073741824 \
+	-DSQLITE_MAX_FUNCTION_ARG=127 \
+	-DSQLITE_MAX_ATTACHED=125 \
+	-DSQLITE_MAX_PAGE_COUNT=4294967294 \
 	-DSQLITE_ENABLE_MATH_FUNCTIONS=1 \
 	-DSQLITE_ENABLE_REGEXP=1 \
 	-DSQLITE_ENABLE_VSV=1 \
