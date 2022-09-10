@@ -375,13 +375,6 @@ public class SQLiteConfig {
 
     private static final String[] OnOff = new String[] {"true", "false"};
 
-    static final Set<String> pragmaSet = new TreeSet<String>();
-
-    static {
-        for (SQLiteConfig.Pragma pragma : SQLiteConfig.Pragma.values()) {
-            pragmaSet.add(pragma.pragmaName);
-        }
-    }
 
     /** @return true if explicit read only transactions are enabled */
     public boolean isExplicitReadOnly() {
@@ -541,6 +534,14 @@ public class SQLiteConfig {
             this.pragmaName = pragmaName;
             this.description = description;
             this.choices = choices;
+        }
+
+        static final Set<String> pragmaSet = new TreeSet<String>();
+
+        static {
+            for (SQLiteConfig.Pragma pragma : SQLiteConfig.Pragma.values()) {
+                pragmaSet.add(pragma.pragmaName);
+            }
         }
 
         public final String getPragmaName() {
