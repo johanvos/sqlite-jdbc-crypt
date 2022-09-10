@@ -375,7 +375,6 @@ public class SQLiteConfig {
 
     private static final String[] OnOff = new String[] {"true", "false"};
 
-
     /** @return true if explicit read only transactions are enabled */
     public boolean isExplicitReadOnly() {
         return this.explicitReadOnly;
