@@ -34,7 +34,7 @@ jobs:
         run: make all
       - name: Package DLL binaries
         run: zip -r ./sqlite-natives-$artifactVersion.zip ./src/main/resources/org/sqlite/native
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: SQLiteMC DLL Binaries
           path: |
