@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
 import org.junit.jupiter.api.Test;
 import org.sqlite.SQLiteConfig.JournalMode;
 import org.sqlite.SQLiteConfig.Pragma;
@@ -62,10 +63,10 @@ public class ConnectionTest {
 
                 // these updates must be forbidden in read-only mode
                 assertThatThrownBy(
-                                () -> {
-                                    stat.executeUpdate("create table A(id, name)");
-                                    stat.executeUpdate("insert into A values(1, 'leo')");
-                                })
+                        () -> {
+                            stat.executeUpdate("create table A(id, name)");
+                            stat.executeUpdate("insert into A values(1, 'leo')");
+                        })
                         .isInstanceOf(SQLException.class);
             }
             conn.close();
@@ -85,7 +86,7 @@ public class ConnectionTest {
         config.enforceForeignKeys(true);
 
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:", config.toProperties());
-                Statement stat = conn.createStatement()) {
+             Statement stat = conn.createStatement()) {
 
             stat.executeUpdate(
                     "create table track(id integer primary key, name, aid, foreign key (aid) references artist(id))");
@@ -118,7 +119,7 @@ public class ConnectionTest {
         SQLiteConfig config = new SQLiteConfig();
         config.setSynchronous(SynchronousMode.OFF);
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:", config.toProperties());
-                Statement stat = conn.createStatement()) {
+             Statement stat = conn.createStatement()) {
             ResultSet rs = stat.executeQuery("pragma synchronous");
             if (rs.next()) {
                 ResultSetMetaData rm = rs.getMetaData();
@@ -428,7 +429,7 @@ public class ConnectionTest {
         Statement stat = conn.createStatement();
 
         ResultSet rs = stat.executeQuery("pragma auto_vacuum");
-        assertEquals("2", rs.getString(1));
+        assertThat("2").isEqualTo(rs.getString(1));
         rs.close();
 
         stat.close();
@@ -445,7 +446,7 @@ public class ConnectionTest {
         Statement stat = conn.createStatement();
 
         ResultSet rs = stat.executeQuery("pragma auto_vacuum");
-        assertEquals("1", rs.getString(1));
+        assertThat("1").isEqualTo(rs.getString(1));
         rs.close();
 
         stat.close();
@@ -463,7 +464,7 @@ public class ConnectionTest {
         Statement stat = conn.createStatement();
 
         ResultSet rs = stat.executeQuery("pragma auto_vacuum");
-        assertEquals("2", rs.getString(1));
+        assertThat("2").isEqualTo(rs.getString(1));
         rs.close();
 
         stat.close();

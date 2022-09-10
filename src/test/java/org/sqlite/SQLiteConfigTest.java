@@ -30,8 +30,8 @@ public class SQLiteConfigTest {
     public void busyTimeout() {
         SQLiteConfig config = new SQLiteConfig();
 
-        assertEquals(3000, config.getBusyTimeout());
+        assertThat(3000).isEqualTo(config.getBusyTimeout());
         config.setBusyTimeout(1500);
-        assertEquals(1500, config.getBusyTimeout());
+        assertThat(1500).isEqualTo(config.getBusyTimeout());
     }
 }
