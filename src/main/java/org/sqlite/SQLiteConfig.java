@@ -52,6 +52,8 @@ public class SQLiteConfig {
     private final Properties pragmaTable;
     private int openModeFlag = 0x00;
 
+    private boolean explicitReadOnly;
+
     private final SQLiteConnectionConfig defaultConnectionConfig;
 
     /** Default constructor. */
@@ -87,6 +89,9 @@ public class SQLiteConfig {
         setOpenMode(SQLiteOpenMode.OPEN_URI);
 
         this.defaultConnectionConfig = SQLiteConnectionConfig.fromPragmaTable(pragmaTable);
+        this.explicitReadOnly =
+                Boolean.parseBoolean(
+                        pragmaTable.getProperty(Pragma.JDBC_EXPLICIT_READONLY.pragmaName, "false"));
     }
 
     public SQLiteConnectionConfig newConnectionConfig() {
@@ -181,6 +186,9 @@ public class SQLiteConfig {
         pragmaParams.remove(Pragma.LIMIT_WORKER_THREADS.pragmaName);
         pragmaParams.remove(Pragma.LIMIT_PAGE_COUNT.pragmaName);
 
+        // exclude this "fake" pragma from execution
+        pragmaParams.remove(Pragma.JDBC_EXPLICIT_READONLY.pragmaName);
+
         setupConnection(conn, pragmaParams, pragmaTable);
         try (Statement stat = conn.createStatement()) {
             stat.execute("select 1 from sqlite_master");
@@ -227,6 +235,10 @@ public class SQLiteConfig {
                 if (value != null) {
                     stat.execute(String.format("pragma %s=%s", key, value));
                 }
+            }
+        } finally {
+            if (stat != null) {
+                stat.close();
             }
         }
     }
@@ -344,7 +356,8 @@ public class SQLiteConfig {
         pragmaTable.setProperty(
                 Pragma.DATE_STRING_FORMAT.pragmaName,
                 defaultConnectionConfig.getDateStringFormat());
-
+        pragmaTable.setProperty(
+                Pragma.JDBC_EXPLICIT_READONLY.pragmaName, this.explicitReadOnly ? "true" : "false");
         return pragmaTable;
     }
 
@@ -366,6 +379,28 @@ public class SQLiteConfig {
 
     private static final String[] OnOff = new String[] {"true", "false"};
 
+    static final Set<String> pragmaSet = new TreeSet<String>();
+
+    static {
+        for (SQLiteConfig.Pragma pragma : SQLiteConfig.Pragma.values()) {
+            pragmaSet.add(pragma.pragmaName);
+        }
+    }
+
+    /** @return true if explicit read only transactions are enabled */
+    public boolean isExplicitReadOnly() {
+        return this.explicitReadOnly;
+    }
+
+    /**
+     * Enable read only transactions after connection creation if explicit read only is true.
+     *
+     * @param readOnly whether to enable explicit read only
+     */
+    public void setExplicitReadOnly(boolean readOnly) {
+        this.explicitReadOnly = readOnly;
+    }
+
     public static enum Pragma {
 
         // Parameters requiring SQLite3 API invocation
@@ -373,7 +408,7 @@ public class SQLiteConfig {
         SHARED_CACHE("shared_cache", "Enable SQLite Shared-Cache mode, native driver only", OnOff),
         LOAD_EXTENSION(
                 "enable_load_extension",
-                "Enable SQLite load_extention() function, native driver only",
+                "Enable SQLite load_extension() function, native driver only",
                 OnOff),
         CACHE(
                 "cache",
@@ -473,6 +508,9 @@ public class SQLiteConfig {
         // Keep compatibility for legacy Xenial JDBC implementation
         HEXKEY_MODE("hexkey_mode", toStringArray(HexKeyMode.values())),
         PASSWORD("password", null),
+
+        // extensions: "fake" pragmas to allow conformance with JDBC
+        JDBC_EXPLICIT_READONLY("jdbc.explicit_readonly");
 
         // New pragmas for SQLiteMC improved support
         KEY("key", null),
@@ -617,11 +655,11 @@ public class SQLiteConfig {
     }
 
     /**
+     * @deprecated Enables or disables the count-changes flag. When enabled, INSERT, UPDATE and
+     *     DELETE statements return the number of rows they modified.
      * @param enable True to enable; false to disable.
      * @see <a
      *     href="http://www.sqlite.org/pragma.html#pragma_count_changes">www.sqlite.org/pragma.html#pragma_count_changes</a>
-     * @deprecated Enables or disables the count-changes flag. When enabled, INSERT, UPDATE and
-     *     DELETE statements return the number of rows they modified.
      */
     @Deprecated
     public void enableCountChanges(boolean enable) {
@@ -652,10 +690,10 @@ public class SQLiteConfig {
     }
 
     /**
+     * @deprecated Enables or disables the empty_result_callbacks flag.
      * @param enable True to enable; false to disable. false.
      * @see <a
      *     href="http://www.sqlite.org/pragma.html#pragma_empty_result_callbacks">http://www.sqlite.org/pragma.html#pragma_empty_result_callbacks</a>
-     * @deprecated Enables or disables the empty_result_callbacks flag.
      */
     @Deprecated
     public void enableEmptyResultCallBacks(boolean enable) {
@@ -771,12 +809,12 @@ public class SQLiteConfig {
     }
 
     /**
-     * @param enable True to enable; false to disable.
-     * @see <a
-     *     href="http://www.sqlite.org/pragma.html#pragma_full_column_names">www.sqlite.org/pragma.html#pragma_full_column_names</a>
      * @deprecated Enables or disables the full_column_name flag. This flag together with the
      *     short_column_names flag determine the way SQLite assigns names to result columns of
      *     SELECT statements.
+     * @param enable True to enable; false to disable.
+     * @see <a
+     *     href="http://www.sqlite.org/pragma.html#pragma_full_column_names">www.sqlite.org/pragma.html#pragma_full_column_names</a>
      */
     @Deprecated
     public void enableFullColumnNames(boolean enable) {

@@ -1,7 +1,6 @@
 package org.sqlite;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -9,6 +8,8 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -16,6 +17,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import org.sqlite.SQLiteConfig.TransactionMode;
 import org.sqlite.core.CoreDatabaseMetaData;
 import org.sqlite.core.DB;
 import org.sqlite.core.NativeDB;
@@ -27,6 +29,9 @@ public abstract class SQLiteConnection implements Connection {
     private final DB db;
     private CoreDatabaseMetaData meta = null;
     private final SQLiteConnectionConfig connectionConfig;
+
+    private TransactionMode currentTransactionMode;
+    private boolean firstStatementExecuted = false;
 
     /**
      * Connection constructor for reusing an existing DB handle
@@ -64,6 +69,9 @@ public abstract class SQLiteConnection implements Connection {
             SQLiteConfig config = this.db.getConfig();
             this.connectionConfig = this.db.getConfig().newConnectionConfig();
             config.apply(this);
+            this.currentTransactionMode = this.getDatabase().getConfig().getTransactionMode();
+            // connection starts in "clean" state (even though some PRAGMA statements were executed)
+            this.firstStatementExecuted = false;
         } catch (Throwable t) {
             try {
                 if (newDB != null) {
@@ -74,6 +82,22 @@ public abstract class SQLiteConnection implements Connection {
             }
             throw t;
         }
+    }
+
+    public TransactionMode getCurrentTransactionMode() {
+        return this.currentTransactionMode;
+    }
+
+    public void setCurrentTransactionMode(final TransactionMode currentTransactionMode) {
+        this.currentTransactionMode = currentTransactionMode;
+    }
+
+    public void setFirstStatementExecuted(final boolean firstStatementExecuted) {
+        this.firstStatementExecuted = firstStatementExecuted;
+    }
+
+    public boolean isFirstStatementExecuted() {
+        return firstStatementExecuted;
     }
 
     public SQLiteConnectionConfig getConnectionConfig() {
@@ -309,18 +333,9 @@ public abstract class SQLiteConnection implements Connection {
             //            }
         }
 
-        byte[] buffer = new byte[8192]; // 8K buffer
-        FileOutputStream writer = new FileOutputStream(dbFile);
-        InputStream reader = resourceAddr.openStream();
-        try {
-            int bytesRead = 0;
-            while ((bytesRead = reader.read(buffer)) != -1) {
-                writer.write(buffer, 0, bytesRead);
-            }
+        try (InputStream reader = resourceAddr.openStream()) {
+            Files.copy(reader, dbFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             return dbFile;
-        } finally {
-            writer.close();
-            reader.close();
         }
     }
 
@@ -343,9 +358,15 @@ public abstract class SQLiteConnection implements Connection {
         if (connectionConfig.isAutoCommit() == ac) return;
 
         connectionConfig.setAutoCommit(ac);
-        db.exec(
-                connectionConfig.isAutoCommit() ? "commit;" : connectionConfig.transactionPrefix(),
-                ac);
+        // db.exec(connectionConfig.isAutoCommit() ? "commit;" : this.transactionPrefix(), ac);
+
+        if (this.getConnectionConfig().isAutoCommit()) {
+            db.exec("commit;", ac);
+            this.currentTransactionMode = null;
+        } else {
+            db.exec(this.transactionPrefix(), ac);
+            this.currentTransactionMode = this.getConnectionConfig().getTransactionMode();
+        }
     }
 
     /**
@@ -361,6 +382,8 @@ public abstract class SQLiteConnection implements Connection {
      * Sets the timeout value for the connection. A timeout value less than or equal to zero turns
      * off all busy handlers.
      *
+     * @see <a
+     *     href="http://www.sqlite.org/c3ref/busy_timeout.html">http://www.sqlite.org/c3ref/busy_timeout.html</a>
      * @param timeoutMillis The timeout value in milliseconds.
      * @throws SQLException
      */
@@ -422,7 +445,9 @@ public abstract class SQLiteConnection implements Connection {
         checkOpen();
         if (connectionConfig.isAutoCommit()) throw new SQLException("database in auto-commit mode");
         db.exec("commit;", getAutoCommit());
-        db.exec(connectionConfig.transactionPrefix(), getAutoCommit());
+        db.exec(this.transactionPrefix(), getAutoCommit());
+        this.firstStatementExecuted = false;
+        this.setCurrentTransactionMode(this.getConnectionConfig().getTransactionMode());
     }
 
     /** @see java.sql.Connection#rollback() */
@@ -431,7 +456,9 @@ public abstract class SQLiteConnection implements Connection {
         checkOpen();
         if (connectionConfig.isAutoCommit()) throw new SQLException("database in auto-commit mode");
         db.exec("rollback;", getAutoCommit());
-        db.exec(connectionConfig.transactionPrefix(), getAutoCommit());
+        db.exec(this.transactionPrefix(), getAutoCommit());
+        this.firstStatementExecuted = false;
+        this.setCurrentTransactionMode(this.getConnectionConfig().getTransactionMode());
     }
 
     /**
@@ -549,5 +576,9 @@ public abstract class SQLiteConnection implements Connection {
 
         final String newFilename = sb.toString();
         return newFilename;
+    }
+
+    protected String transactionPrefix() {
+        return this.connectionConfig.transactionPrefix();
     }
 }

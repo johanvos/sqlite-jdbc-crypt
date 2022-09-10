@@ -10,7 +10,9 @@ all: jni-header package
 deploy:
 	mvn package deploy -P release --settings settings.xml
 
+DOCKER_RUN_OPTS=--rm
 MVN:=mvn
+CODESIGN:=docker run $(DOCKER_RUN_OPTS) -v $$PWD:/workdir gotson/rcodesign sign
 SRC:=src/main/java
 SQLITE_OUT:=$(TARGET)/$(sqlite)-$(OS_NAME)-$(OS_ARCH)
 SQLITE_OBJ?=$(SQLITE_OUT)/sqlite3.o
@@ -139,8 +141,8 @@ NATIVE_TARGET_DIR:=$(TARGET)/classes/org/sqlite/native/$(OS_NAME)/$(OS_ARCH)
 NATIVE_DLL:=$(NATIVE_DIR)/$(LIBNAME)
 
 # For cross-compilation, install docker. See also https://github.com/dockcross/dockcross
-#native-all: native win32 win64 win-armv7 win-arm64 mac64 linux32 linux64 freebsd32 freebsd64 freebsd-arm64 linux-arm linux-armv6 linux-armv7 linux-arm64 linux-android-arm linux-android-arm64 linux-android-x86 linux-android-x64 linux-ppc64 alpine-linux64 linux-musl-arm64
-native-all: native win32 win64 win-armv7 win-arm64 mac64 linux32 linux64 linux-arm linux-armv6 linux-armv7 linux-arm64 linux-android-arm linux-android-arm64 linux-android-x86 linux-android-x64 linux-ppc64 alpine-linux64 linux-musl-arm64
+# native-all: native win32 win64 win-armv7 win-arm64 mac64-signed mac-arm64-signed linux32 linux64 freebsd32 freebsd64 freebsd-arm64 linux-arm linux-armv6 linux-armv7 linux-arm64 linux-android-arm linux-android-arm64 linux-android-x86 linux-android-x64 linux-ppc64 linux-musl32 linux-musl64 linux-musl-arm64
+native-all: native win32 win64 win-armv7 win-arm64 mac64-signed mac-arm64-signed linux32 linux64 linux-arm linux-armv6 linux-armv7 linux-arm64 linux-android-arm linux-android-arm64 linux-android-x86 linux-android-x64 linux-ppc64 linux-musl32 linux-musl64 linux-musl-arm64
 
 native: $(NATIVE_DLL)
 
@@ -149,8 +151,6 @@ $(NATIVE_DLL): $(SQLITE_OUT)/$(LIBNAME)
 	cp $< $@
 	#@mkdir -p $(NATIVE_TARGET_DIR)
 	#cp $< $(NATIVE_TARGET_DIR)/$(LIBNAME)
-
-DOCKER_RUN_OPTS=--rm
 
 win32: $(SQLITE_UNPACKED) jni-header
 	./docker/dockcross-windows-x86 -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=i686-w64-mingw32.static- OS_NAME=Windows OS_ARCH=x86'
@@ -179,7 +179,10 @@ freebsd64: $(SQLITE_UNPACKED) jni-header
 freebsd-arm64: $(SQLITE_UNPACKED) jni-header
 	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/workdir gotson/freebsd-cross-build:aarch64-11.4 sh -c 'make clean-native native OS_NAME=FreeBSD OS_ARCH=aarch64 CROSS_PREFIX=aarch64-unknown-freebsd11-'
 
-alpine-linux64: $(SQLITE_UNPACKED) jni-header
+linux-musl32: $(SQLITE_UNPACKED) jni-header
+	docker run $(DOCKER_RUN_OPTS) -u "$(BUILDER_UID):$(BUILDER_GID)" -v $$PWD:/work gotson/alpine-linux-x86 bash -c 'make clean-native native OS_NAME=Linux-Musl OS_ARCH=x86'
+
+linux-musl64: $(SQLITE_UNPACKED) jni-header
 	docker run $(DOCKER_RUN_OPTS) -u "$(BUILDER_UID):$(BUILDER_GID)" -v $$PWD:/work xerial/alpine-linux-x86_64 bash -c "make clean-native native OS_NAME=Linux-Musl OS_ARCH=x86_64"
 
 linux-musl-arm64: $(SQLITE_UNPACKED) jni-header
@@ -215,12 +218,21 @@ linux-ppc64: $(SQLITE_UNPACKED) jni-header
 mac64: $(SQLITE_UNPACKED) jni-header
 	docker run $(DOCKER_RUN_OPTS) -u "$(BUILDER_UID):$(BUILDER_GID)" -v $$PWD:/workdir -e CROSS_TRIPLE=x86_64-apple-darwin multiarch/crossbuild make clean-native native OS_NAME=Mac OS_ARCH=x86_64
 
+mac-arm64: $(SQLITE_UNPACKED) jni-header
+	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/workdir -e CROSS_TRIPLE=aarch64-apple-darwin gotson/crossbuild make clean-native native OS_NAME=Mac OS_ARCH=aarch64 CROSS_PREFIX="/usr/osxcross/bin/aarch64-apple-darwin20.4-"
+
 # deprecated
 mac32: $(SQLITE_UNPACKED) jni-header
 	docker run $(DOCKER_RUN_OPTS) -u "$(BUILDER_UID):$(BUILDER_GID)" -v $$PWD:/workdir -e CROSS_TRIPLE=i386-apple-darwin multiarch/crossbuild make clean-native native OS_NAME=Mac OS_ARCH=x86
 
 sparcv9:
 	$(MAKE) native OS_NAME=SunOS OS_ARCH=sparcv9
+
+mac64-signed: mac64
+	$(CODESIGN) src/main/resources/org/sqlite/native/Mac/x86_64/libsqlitejdbc.jnilib
+
+mac-arm64-signed: mac-arm64
+	$(CODESIGN) src/main/resources/org/sqlite/native/Mac/aarch64/libsqlitejdbc.jnilib
 
 package: native-all
 	rm -rf target/dependency-maven-plugin-markers
@@ -246,5 +258,8 @@ docker-linux64:
 docker-linux32:
 	docker build -f docker/Dockerfile.linux_x86 -t xerial/centos5-linux-x86 .
 
-docker-alpine-linux64:
+docker-linux-musl32:
+	docker build -f docker/Dockerfile.alpine-linux_x86 -t gotson/alpine-linux-x86 .
+
+docker-linux-musl64:
 	docker build -f docker/Dockerfile.alpine-linux_x86_64 -t xerial/alpine-linux-x86_64 .
