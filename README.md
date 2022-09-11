@@ -1,11 +1,13 @@
 # SQLite JDBC Driver
-[![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/xerial/sqlite-jdbc/CI/master)](https://github.com/xerial/sqlite-jdbc/actions/workflows/test.yml?query=branch%3Amaster)
-[![Join the chat at https://gitter.im/xerial/sqlite-jdbc](https://badges.gitter.im/xerial/sqlite-jdbc.svg)](https://gitter.im/xerial/sqlite-jdbc?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.xerial/sqlite-jdbc/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.xerial/sqlite-jdbc/)
-[![javadoc](https://javadoc.io/badge2/org.xerial/sqlite-jdbc/javadoc.svg)](https://javadoc.io/doc/org.xerial/sqlite-jdbc)
-[![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/org.xerial/sqlite-jdbc?color=blue&label=maven%20snapshot&server=https%3A%2F%2Foss.sonatype.org%2F)](https://oss.sonatype.org/content/repositories/snapshots/org/xerial/sqlite-jdbc/)
+[![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/willena/sqlite-jdbc-crypt/CI/master)](https://github.com/willena/sqlite-jdbc-crypt/actions/workflows/build-release.yml?query=branch%3Amaster)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.willena/sqlite-jdbc/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.willena/sqlite-jdbc/)
+[![javadoc](https://javadoc.io/badge2/io.github.willena/sqlite-jdbc/javadoc.svg)](https://javadoc.io/doc/io.github.willena/sqlite-jdbc)
+[![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/io.github.willena/sqlite-jdbc?color=blue&label=maven%20snapshot&server=https%3A%2F%2Foss.sonatype.org%2F)](https://oss.sonatype.org/content/repositories/snapshots/io/github/willena/sqlite-jdbc/)
 
 SQLite JDBC is a library for accessing and creating [SQLite](http://sqlite.org) database files in Java.
+
+This particular fork uses another native library that provides an implementation of SEE.
+the native library is provided by [Utelle](http://github.com/utelle) as part of the [SQLite3MultipleCiphers](https://github.com/utelle/SQLite3MultipleCiphers) project
 
 Our SQLiteJDBC library requires no configuration since native libraries for major OSs, including Windows, macOS, Linux etc., are assembled into a single JAR (Java Archive) file.
 
@@ -110,25 +112,23 @@ the following operating systems:
 | FreeBSD      | ✔   | ✔      |       |       |       | ✔     |       |
 
 
-In the other OSs not listed above, the pure-java SQLite is used. (Applies to versions before 3.7.15)
-
 If you want to use the native library for your OS, [build the source from scratch](./CONTRIBUTING.md).
 
 # Download
 
-Download from [Maven Central](https://search.maven.org/artifact/org.xerial/sqlite-jdbc) or from the [releases](https://github.com/xerial/sqlite-jdbc/releases) page.
+Download from [Maven Central](https://search.maven.org/artifact/io.github.willena/sqlite-jdbc) or from the [releases](https://github.com/willena/sqlite-jdbc-crypt/releases) page.
 
 ```xml
 <dependencies>
     <dependency>
-      <groupId>org.xerial</groupId>
+      <groupId>io.github.willena</groupId>
       <artifactId>sqlite-jdbc</artifactId>
       <version>(version)</version>
     </dependency>
 </dependencies>
 ```
 
-Snapshots of the development version are available in [Sonatype's snapshots repository](https://oss.sonatype.org/content/repositories/snapshots/org/xerial/sqlite-jdbc/).
+Snapshots of the development version are available in [Sonatype's snapshots repository](https://oss.sonatype.org/content/repositories/snapshots/io/github/willena/sqlite-jdbc/).
 
 ## Project versioning explained
 The project's version follows the version of the SQLite library that is bundled in the jar, with an extra digit to denote the project's increment.
@@ -150,7 +150,7 @@ You may need to add shade plugin transformer to solve `No suitable driver found 
 
 ```xml
 <dependency>
-    <groupId>org.xerial</groupId>
+    <groupId>io.github.willena</groupId>
     <artifactId>sqlite-jdbc</artifactId>
     <version>(version)</version>
 </dependency>
@@ -159,7 +159,7 @@ You may need to add shade plugin transformer to solve `No suitable driver found 
 # How can I help?
 
 We are always looking for:
-- **Reviewers** for issues or PRs, you can check https://github.com/xerial/sqlite-jdbc/labels/review%20wanted
-- **Contributors** to submit PRs, you can check https://github.com/xerial/sqlite-jdbc/labels/help%20wanted and https://github.com/xerial/sqlite-jdbc/labels/good%20first%20issue
+- **Reviewers** for issues or PRs, you can check https://github.com/willena/sqlite-jdbc-crypt/labels/review%20wanted
+- **Contributors** to submit PRs, you can check https://github.com/willena/sqlite-jdbc-crypt/labels/help%20wanted and https://github.com/willena/sqlite-jdbc-crypt/labels/good%20first%20issue
 
 Please read our [contribution](./CONTRIBUTING.md) guide.

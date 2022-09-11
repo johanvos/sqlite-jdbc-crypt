@@ -100,32 +100,118 @@ Connection conn = DriverManager.getConnection("jdbc:sqlite:sample.db", config.to
 ```
 
 ## How to Use Encrypted Databases
-*__Important: xerial/sqlite-jdbc does not support encryption out of the box, you need a special .dll/.so__*
 
-SQLite support encryption of the database via special drivers and a key. To use an encrypted database you need a driver which supports encrypted database via `pragma key` or `pragma hexkey`, e.g. SQLite SSE or SQLCipher. You need to specify those drivers via directly referencing the .dll/.so through:
-```
--Dorg.sqlite.lib.path=.
--Dorg.sqlite.lib.name=sqlite_cryption_support.dll
-```
+### Get started with encryption
 
-Now the only need to specify the password is via:
+The main goal of this library is to allow users to encrypt databases they are producing.
+In this section we will walk through the main aspect to understand to make this library
+work correctly with your requirements.
+
+The content of this section is mainly extracted from the WxSQLite3 repository.
+
+#### Introduction
+
+This library is compiled with a modified SQLite native library that support multiple
+cipher schemes. In order to be used the user must choose a cipher scheme manually. If
+not using the default one (at the moment the default cipher is CHACHA20) is applied.
+
+Before applying a configuration, choose the encryption scheme you would like to use in the
+supported cipher list.
+
+The full documentation of the native library used can be found here: https://utelle.github.io/SQLite3MultipleCiphers/
+
+#### Configuration methods
+
+##### Configure using SQLiteMCConfig objects
+
+Starting with version 3.32.0 the java implementation has a new configuration object called SQLiteMCConfig that can hold
+the cipher configuration.
+The interface allows for very simple and quick configuration of the choosen cipher algorithm.
+
+For each cipher supported a ready to use and a customizable object is present. If you want to go completely custom it
+is also possible. All parameters are available through setters.
+
+Each conbinaison of paramters presented in previous section are implemented as getDefault (SQLiteMC default) or
+get<name>Defautls (ex: getV2Defaults() for SQLCipher))
+
+The object names are :
+
+````
+SQLiteMCConfig.Builder; Use this to build a configuration object from scratch
+    
+SQLiteMCSqlCipherConfig; // Generate a configuration for SQLCipher
+SQLiteMCChacha20Config; // Generate a configuration for Chacha20
+SQLiteMCWxAES256Config; // Generate a configuration for legacy AES 256 WxSQLite3
+SQLiteMCWxAES128Config; // Generate a configuration for legacy AES 128 WxSQLite3
+SQLiteMCRC4Config; // Generate a configuration for System.Data.SQLite
+````
+
+To specify the key you just need to use the `withKey(String Key)` or any of the configuration object.
+To create the connection it is now very simple:
+
 ```java
-Connection connection = DriverManager.getConnection("jdbc:sqlite:db.sqlite", "", "password");
+//Using the SQLiteMC default parameters
+Connection connection=DriverManager.getConnection("jdbc:sqlite:file:file.db",new SQLiteMCConfig.Builder().withKey("Key").build().toProperties());
+Connection connection=new SQLiteMCConfig.Builder().withKey("Key").build().createConnection("jdbc:sqlite:file:file.db");
+//Using Chacha20
+Connection connection=DriverManager.getConnection("jdbc:sqlite:file:file.db",SQLiteMCChacha20Config.getDefault().withKey("Key").build().toProperties());
+Connection connection=SQLiteMCChacha20Config.getDefault().withKey("Key").build().createConnection("jdbc:sqlite:file:file.db");
 ```
 
-### Binary Passphrase
-If you need to provide the password in binary form, you have to specify how the provided .dll/.so needs it. There are two different modes available:
+##### Configure using SQL specific SQL functions
 
-#### SSE
-The binary password is provided via `pragma hexkey='AE...'`
+**Note:** See
+the [SQLite3 Multiple Ciphers SQL Documentation](https://utelle.github.io/SQLite3MultipleCiphers/docs/configuration/config_sql/)
+for more details.
 
-#### SQLCipher
-The binary password is provided via `pragma key="x'AE...'"`
+##### Configure using URI
 
-You set the mode at the connection string level:
-```java
-Connection connection = DriverManager.getConnection("jdbc:sqlite:db.sqlite?hexkey_mode=sse", "", "AE...");
+**Note:** See
+the [SQLite3 Multiple Ciphers URI Documentation](https://utelle.github.io/SQLite3MultipleCiphers/docs/configuration/config_uri/)
+for more details.
+
+Example: URI query string to select the legacy SQLCipher Version 2 encryption scheme:
+
 ```
+file:databasefile?cipher=sqlcipher&legacy=1&kdf_iter=4000
+```
+
+#### Encryption key manipulations
+
+Several manipulation can be very usefull when encrypting a database.
+For example you may want to change the password used, remove it, or encrypt a plain database.
+
+Here is what you need to know.
+
+##### Encrypt a plain database
+
+1. Open the database file
+2. Set cipher configuration
+3. Apply the key for the first time using the `PRAGMA` syntax
+4. Use as usual
+
+##### Open an encrypted DB
+
+1. Open the database file
+2. set cipher configuration
+3. Apply the corresponding key using the `PRAGMA` syntax
+4. Use normally
+
+##### Change the key used for a database
+
+1. Open the database file
+2. Set cipher configuration
+3. Apply the current key using the `PRAGMA key='mykey'` syntax (It needs to be adapted if using an hexadecimal key)
+4. Change the key using the `PRAGMA rekey='my_new_key'` syntax (It needs to be adapted if using an hexadecimal key)
+5. Use normally
+
+##### Remove the key and go back to plain
+
+1. Open the database file
+2. Set cipher configuration
+3. Apply the current key using the `PRAGMA key='mykey'` syntax (It needs to be adapted if using an hexadecimal key)
+4. Change the key to `null` using`PRAGMA rekey=''`
+5. Use normally
 
 ## Explicit read only transactions (use with Hibernate)
 
