@@ -437,7 +437,7 @@ public class SQLiteConfig {
                 "fullsync",
                 "Whether or not the F_FULLFSYNC syncing method is used on systems that support it. Only Mac OS X supports F_FULLFSYNC.",
                 OnOff),
-        AUTO_VACUUM("auto_vacuum", toStringArray(AutoVacuum.values())),
+        AUTO_VACUUM("auto_vacuum", "Auto vacuum option", toStringArray(AutoVacuum.values())),
         INCREMENTAL_VACUUM(
                 "incremental_vacuum",
                 "Causes up to N pages to be removed from the freelist. The database file is truncated by the same amount. The incremental_vacuum pragma has no effect if the database is not in auto_vacuum=incremental mode or if there are no pages on the freelist. If there are fewer than N pages on the freelist, or if N is less than 1, or if the \"(N)\" argument is omitted, then the entire freelist is cleared.",
