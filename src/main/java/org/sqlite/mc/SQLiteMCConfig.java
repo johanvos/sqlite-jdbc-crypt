@@ -16,6 +16,7 @@ public class SQLiteMCConfig extends SQLiteConfig {
                 Pragma.CIPHER,
                 Pragma.LEGACY,
                 Pragma.HMAC_CHECK,
+                Pragma.MC_LEGACY_WAL,
                 Pragma.LEGACY_PAGE_SIZE,
                 Pragma.KDF_ITER,
                 Pragma.FAST_KDF_ITER,
@@ -51,6 +52,7 @@ public class SQLiteMCConfig extends SQLiteConfig {
         pragmaParams.remove(Pragma.REKEY.pragmaName);
         pragmaParams.remove(Pragma.CIPHER.pragmaName);
         pragmaParams.remove(Pragma.HMAC_CHECK.pragmaName);
+        pragmaParams.remove(Pragma.MC_LEGACY_WAL.pragmaName);
         pragmaParams.remove(Pragma.LEGACY.pragmaName);
         pragmaParams.remove(Pragma.LEGACY_PAGE_SIZE.pragmaName);
         pragmaParams.remove(Pragma.KDF_ITER.pragmaName);

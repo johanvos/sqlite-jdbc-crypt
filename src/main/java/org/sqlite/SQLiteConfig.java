@@ -576,6 +576,7 @@ public class SQLiteConfig {
         REKEY("rekey", "Used to encrypt an existing unencrypted database, change the encryption key of an existing encrypted database, remove encryption from an existing encrypted database", null),
         CIPHER("cipher", "Allows to select the cipher to be used for encrypting the database", null),
         HMAC_CHECK("hmac_check", "Sets a boolean flag whether the HMAC should be validated on read operations for encryption schemes using HMACs", null),
+        MC_LEGACY_WAL("mc_legacy_wal", "Sets a boolean flag whether the legacy mode for the WAL journal encryption should be used", null),
         LEGACY("legacy", "Defines the legacy mode for a cipher scheme", null),
         LEGACY_PAGE_SIZE("legacy_page_size", "Specifies the database page size to be used in legacy mode for a cipher scheme", null),
         KDF_ITER("kdf_iter", "Allows to increase or decrease the number of iterations used", null),
