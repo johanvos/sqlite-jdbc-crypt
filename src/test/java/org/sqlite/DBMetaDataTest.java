@@ -52,11 +52,15 @@ public class DBMetaDataTest {
         stat.close();
 
         assertThat(rs.next()).isTrue();
+        assertThat(rs.getString("TABLE_NAME")).isEqualTo("sqlite_schema");
+        assertThat(rs.getString("TABLE_TYPE")).isEqualTo("SYSTEM TABLE");
+        assertThat(rs.next()).isTrue();
         assertThat(rs.getString("TABLE_NAME")).isEqualTo("test"); // 3
         assertThat(rs.getString("TABLE_TYPE")).isEqualTo("TABLE"); // 4
         assertThat(rs.next()).isTrue();
         assertThat(rs.getString("TABLE_NAME")).isEqualTo("testView");
         assertThat(rs.getString("TABLE_TYPE")).isEqualTo("VIEW");
+        assertThat(rs.next()).isFalse();
         rs.close();
 
         rs = meta.getTables(null, null, "bob", null);
@@ -82,6 +86,33 @@ public class DBMetaDataTest {
         assertThat(rs.getString("TABLE_NAME")).isEqualTo("testView");
         assertThat(rs.next()).isFalse();
         rs.close();
+
+        rs = meta.getTables(null, null, null, new String[] {"system table"});
+        assertThat(rs.next()).isTrue();
+        assertThat(rs.getString("TABLE_NAME")).isEqualTo("sqlite_schema");
+        assertThat(rs.next()).isFalse();
+        rs.close();
+    }
+
+    @Test
+    public void getTablesWithEscape() throws SQLException {
+        stat.executeUpdate("create table 'table%with%wildcards'(c1 integer)");
+        stat.executeUpdate("create table 'table_with_wildcards'(c2 integer)");
+        stat.executeUpdate("create table 'tableXwithXwildcards'(c3 integer)");
+
+        String esc = meta.getSearchStringEscape();
+        try (ResultSet rs =
+                meta.getTables(null, null, "table_with_wildcards".replace("_", esc + "_"), null)) {
+            assertThat(rs.next()).isTrue();
+            assertThat(rs.getString("TABLE_NAME")).isEqualTo("table_with_wildcards");
+            assertThat(rs.next()).isFalse();
+        }
+        try (ResultSet rs =
+                meta.getTables(null, null, "table%with%wildcards".replace("%", esc + "%"), null)) {
+            assertThat(rs.next()).isTrue();
+            assertThat(rs.getString("TABLE_NAME")).isEqualTo("table%with%wildcards");
+            assertThat(rs.next()).isFalse();
+        }
     }
 
     @Test
@@ -103,17 +134,133 @@ public class DBMetaDataTest {
     public void getTypeInfo() throws SQLException {
         ResultSet rs = meta.getTypeInfo();
         assertThat(rs).isNotNull();
-        assertThat(rs.next()).isTrue();
-        assertThat(rs.getString("TYPE_NAME")).isEqualTo("BLOB");
-        assertThat(rs.next()).isTrue();
-        assertThat(rs.getString("TYPE_NAME")).isEqualTo("INTEGER");
-        assertThat(rs.next()).isTrue();
-        assertThat(rs.getString("TYPE_NAME")).isEqualTo("NULL");
-        assertThat(rs.next()).isTrue();
-        assertThat(rs.getString("TYPE_NAME")).isEqualTo("REAL");
-        assertThat(rs.next()).isTrue();
-        assertThat(rs.getString("TYPE_NAME")).isEqualTo("TEXT");
+
+        testTypeInfo(
+                rs,
+                "BLOB",
+                Types.BLOB,
+                0,
+                null,
+                null,
+                null,
+                DatabaseMetaData.typeNullable,
+                false,
+                DatabaseMetaData.typeSearchable,
+                true,
+                false,
+                false,
+                0,
+                0,
+                10);
+        testTypeInfo(
+                rs,
+                "INTEGER",
+                Types.INTEGER,
+                0,
+                null,
+                null,
+                null,
+                DatabaseMetaData.typeNullable,
+                false,
+                DatabaseMetaData.typeSearchable,
+                false,
+                false,
+                true,
+                0,
+                0,
+                10);
+        testTypeInfo(
+                rs,
+                "NULL",
+                Types.NULL,
+                0,
+                null,
+                null,
+                null,
+                DatabaseMetaData.typeNullable,
+                false,
+                DatabaseMetaData.typeSearchable,
+                true,
+                false,
+                false,
+                0,
+                0,
+                10);
+        testTypeInfo(
+                rs,
+                "REAL",
+                Types.REAL,
+                0,
+                null,
+                null,
+                null,
+                DatabaseMetaData.typeNullable,
+                false,
+                DatabaseMetaData.typeSearchable,
+                false,
+                false,
+                false,
+                0,
+                0,
+                10);
+        testTypeInfo(
+                rs,
+                "TEXT",
+                Types.VARCHAR,
+                0,
+                null,
+                null,
+                null,
+                DatabaseMetaData.typeNullable,
+                true,
+                DatabaseMetaData.typeSearchable,
+                true,
+                false,
+                false,
+                0,
+                0,
+                10);
+
         assertThat(rs.next()).isFalse();
+    }
+
+    private void testTypeInfo(
+            ResultSet rs,
+            String name,
+            int type,
+            int precision,
+            String literalPrefix,
+            String literalSuffix,
+            String createParams,
+            int nullable,
+            boolean caseSensitive,
+            int searchable,
+            boolean unsigned,
+            boolean fixedPrecScale,
+            boolean autoIncrement,
+            int minScale,
+            int maxScale,
+            int radix)
+            throws SQLException {
+        assertThat(rs.next()).isTrue();
+        assertThat(rs.getString(1)).isEqualTo(name);
+        assertThat(rs.getInt(2)).isEqualTo(type);
+        assertThat(rs.getInt(3)).isEqualTo(precision);
+        assertThat(rs.getString(4)).isEqualTo(literalPrefix);
+        assertThat(rs.getString(5)).isEqualTo(literalSuffix);
+        assertThat(rs.getString(6)).isEqualTo(createParams);
+        assertThat(rs.getShort(7)).isEqualTo((short) nullable);
+        assertThat(rs.getBoolean(8)).isEqualTo(caseSensitive);
+        assertThat(rs.getShort(9)).isEqualTo((short) searchable);
+        assertThat(rs.getBoolean(10)).isEqualTo(unsigned);
+        assertThat(rs.getBoolean(11)).isEqualTo(fixedPrecScale);
+        assertThat(rs.getBoolean(12)).isEqualTo(autoIncrement);
+        assertThat(rs.getString(13)).isEqualTo(null);
+        assertThat(rs.getShort(14)).isEqualTo((short) minScale);
+        assertThat(rs.getShort(15)).isEqualTo((short) maxScale);
+        assertThat(rs.getInt(16)).isEqualTo(0);
+        assertThat(rs.getInt(17)).isEqualTo(0);
+        assertThat(rs.getInt(18)).isEqualTo(radix);
     }
 
     @Test
@@ -269,6 +416,25 @@ public class DBMetaDataTest {
         assertThat(rs.getString(4)).as("second column is named 'j'").isEqualTo("j");
         assertThat(rs.getString(24)).as("second column is generated").isEqualTo("YES");
         assertThat(rs.next()).isFalse();
+    }
+
+    @Test
+    public void getColumnsWithEscape() throws SQLException {
+        stat.executeUpdate("create table wildcard(col1 integer, co_1 integer, 'co%1' integer)");
+
+        String esc = meta.getSearchStringEscape();
+        try (ResultSet rs =
+                meta.getColumns(null, null, "wildcard", "co_1".replace("_", esc + "_"))) {
+            assertThat(rs.next()).isTrue();
+            assertThat(rs.getString("COLUMN_NAME")).isEqualTo("co_1");
+            assertThat(rs.next()).isFalse();
+        }
+        try (ResultSet rs =
+                meta.getColumns(null, null, "wildcard", "co%1".replace("%", esc + "%"))) {
+            assertThat(rs.next()).isTrue();
+            assertThat(rs.getString("COLUMN_NAME")).isEqualTo("co%1");
+            assertThat(rs.next()).isFalse();
+        }
     }
 
     @Test
@@ -783,6 +949,10 @@ public class DBMetaDataTest {
 
         assertThat(rsTables.getString("TABLE_NAME")).isEqualTo("TABLE3");
         assertThat(rsTables.getString("TABLE_TYPE")).isEqualTo("GLOBAL TEMPORARY");
+
+        assertThat(rsTables.next()).isTrue();
+        assertThat(rsTables.getString("TABLE_NAME")).isEqualTo("sqlite_schema");
+        assertThat(rsTables.getString("TABLE_TYPE")).isEqualTo("SYSTEM TABLE");
 
         assertThat(rsTables.next()).isTrue();
         assertThat(rsTables.getString("TABLE_NAME")).isEqualTo("sqlite_sequence");

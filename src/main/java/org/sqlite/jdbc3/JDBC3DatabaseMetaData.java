@@ -6,10 +6,12 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 import java.sql.Struct;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -18,9 +20,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.sqlite.SQLiteConnection;
 import org.sqlite.core.CoreStatement;
 import org.sqlite.jdbc3.JDBC3DatabaseMetaData.ImportedKeyFinder.ForeignKey;
+import org.sqlite.util.QueryUtils;
 import org.sqlite.util.StringUtils;
 
 public abstract class JDBC3DatabaseMetaData extends org.sqlite.core.CoreDatabaseMetaData {
@@ -248,7 +252,7 @@ public abstract class JDBC3DatabaseMetaData extends org.sqlite.core.CoreDatabase
 
     /** @see java.sql.DatabaseMetaData#getSearchStringEscape() */
     public String getSearchStringEscape() {
-        return null;
+        return "\\";
     }
 
     /** @see java.sql.DatabaseMetaData#getIdentifierQuoteString() */
@@ -850,7 +854,7 @@ public abstract class JDBC3DatabaseMetaData extends org.sqlite.core.CoreDatabase
         // create a Matrix Cursor for each of the tables
         // create a merge cursor from all the Matrix Cursors
         // and return the columname and type from:
-        //    "PRAGMA table_info(tablename)"
+        //    "PRAGMA table_xinfo(tablename)"
         // which returns data like this:
         //        sqlite> PRAGMA lastyear.table_info(gross_sales);
         //        cid|name|type|notnull|dflt_value|pk
@@ -1102,7 +1106,9 @@ public abstract class JDBC3DatabaseMetaData extends org.sqlite.core.CoreDatabase
                         if (colNamePattern != null) {
                             sql.append(" where upper(cn) like upper('")
                                     .append(escape(colNamePattern))
-                                    .append("')");
+                                    .append("') ESCAPE '")
+                                    .append(getSearchStringEscape())
+                                    .append("'");
                         }
                     }
                 }
@@ -1498,8 +1504,9 @@ public abstract class JDBC3DatabaseMetaData extends org.sqlite.core.CoreDatabase
 
         if (i == 0) {
             sql = appendDummyForeignKeyList(sql);
+        } else {
+            sql.append(") ORDER BY PKTABLE_CAT, PKTABLE_SCHEM, PKTABLE_NAME, KEY_SEQ;");
         }
-        sql.append(") ORDER BY PKTABLE_CAT, PKTABLE_SCHEM, PKTABLE_NAME, KEY_SEQ;");
 
         return ((CoreStatement) stat).executeQuery(sql.toString(), true);
     }
@@ -1689,6 +1696,10 @@ public abstract class JDBC3DatabaseMetaData extends org.sqlite.core.CoreDatabase
         sql.append("  NULL AS REF_GENERATION").append("\n");
         sql.append("FROM").append("\n");
         sql.append("  (").append("\n");
+        sql.append("    SELECT\n");
+        sql.append("      'sqlite_schema' AS NAME,\n");
+        sql.append("      'SYSTEM TABLE' AS TYPE");
+        sql.append("    UNION ALL").append("\n");
         sql.append("    SELECT").append("\n");
         sql.append("      NAME,").append("\n");
         sql.append("      UPPER(TYPE) AS TYPE").append("\n");
@@ -1712,21 +1723,22 @@ public abstract class JDBC3DatabaseMetaData extends org.sqlite.core.CoreDatabase
         sql.append("    WHERE").append("\n");
         sql.append("      NAME LIKE 'sqlite\\_%' ESCAPE '\\'").append("\n");
         sql.append("  )").append("\n");
-        sql.append(" WHERE TABLE_NAME LIKE '")
-                .append(tblNamePattern)
-                .append("' AND TABLE_TYPE IN (");
+        sql.append(" WHERE TABLE_NAME LIKE '");
+        sql.append(tblNamePattern);
+        sql.append("' ESCAPE '");
+        sql.append(getSearchStringEscape());
+        sql.append("'");
 
-        if (types == null || types.length == 0) {
-            sql.append("'TABLE','VIEW'");
-        } else {
-            sql.append("'").append(types[0].toUpperCase()).append("'");
-
-            for (int i = 1; i < types.length; i++) {
-                sql.append(",'").append(types[i].toUpperCase()).append("'");
-            }
+        if (types != null && types.length != 0) {
+            sql.append(" AND TABLE_TYPE IN (");
+            sql.append(
+                    Arrays.stream(types)
+                            .map((t) -> "'" + t.toUpperCase() + "'")
+                            .collect(Collectors.joining(",")));
+            sql.append(")");
         }
 
-        sql.append(") ORDER BY TABLE_TYPE, TABLE_NAME;");
+        sql.append(" ORDER BY TABLE_TYPE, TABLE_NAME;");
 
         return ((CoreStatement) conn.createStatement()).executeQuery(sql.toString(), true);
     }
@@ -1754,45 +1766,125 @@ public abstract class JDBC3DatabaseMetaData extends org.sqlite.core.CoreDatabase
     /** @see java.sql.DatabaseMetaData#getTypeInfo() */
     public ResultSet getTypeInfo() throws SQLException {
         if (getTypeInfo == null) {
-            getTypeInfo =
-                    conn.prepareStatement(
-                            "select "
-                                    + "tn as TYPE_NAME, "
-                                    + "dt as DATA_TYPE, "
-                                    + "0 as PRECISION, "
-                                    + "null as LITERAL_PREFIX, "
-                                    + "null as LITERAL_SUFFIX, "
-                                    + "null as CREATE_PARAMS, "
-                                    + DatabaseMetaData.typeNullable
-                                    + " as NULLABLE, "
-                                    + "1 as CASE_SENSITIVE, "
-                                    + DatabaseMetaData.typeSearchable
-                                    + " as SEARCHABLE, "
-                                    + "0 as UNSIGNED_ATTRIBUTE, "
-                                    + "0 as FIXED_PREC_SCALE, "
-                                    + "0 as AUTO_INCREMENT, "
-                                    + "null as LOCAL_TYPE_NAME, "
-                                    + "0 as MINIMUM_SCALE, "
-                                    + "0 as MAXIMUM_SCALE, "
-                                    + "0 as SQL_DATA_TYPE, "
-                                    + "0 as SQL_DATETIME_SUB, "
-                                    + "10 as NUM_PREC_RADIX from ("
-                                    + "    select 'BLOB' as tn, "
-                                    + Types.BLOB
-                                    + " as dt union"
-                                    + "    select 'NULL' as tn, "
-                                    + Types.NULL
-                                    + " as dt union"
-                                    + "    select 'REAL' as tn, "
-                                    + Types.REAL
-                                    + " as dt union"
-                                    + "    select 'TEXT' as tn, "
-                                    + Types.VARCHAR
-                                    + " as dt union"
-                                    + "    select 'INTEGER' as tn, "
-                                    + Types.INTEGER
-                                    + " as dt"
-                                    + ") order by TYPE_NAME;");
+            String sql =
+                    QueryUtils.valuesQuery(
+                                    Arrays.asList(
+                                            "TYPE_NAME",
+                                            "DATA_TYPE",
+                                            "PRECISION",
+                                            "LITERAL_PREFIX",
+                                            "LITERAL_SUFFIX",
+                                            "CREATE_PARAMS",
+                                            "NULLABLE",
+                                            "CASE_SENSITIVE",
+                                            "SEARCHABLE",
+                                            "UNSIGNED_ATTRIBUTE",
+                                            "FIXED_PREC_SCALE",
+                                            "AUTO_INCREMENT",
+                                            "LOCAL_TYPE_NAME",
+                                            "MINIMUM_SCALE",
+                                            "MAXIMUM_SCALE",
+                                            "SQL_DATA_TYPE",
+                                            "SQL_DATETIME_SUB",
+                                            "NUM_PREC_RADIX"),
+                                    Arrays.asList(
+                                            Arrays.asList(
+                                                    "BLOB",
+                                                    Types.BLOB,
+                                                    0,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    DatabaseMetaData.typeNullable,
+                                                    0,
+                                                    DatabaseMetaData.typeSearchable,
+                                                    1,
+                                                    0,
+                                                    0,
+                                                    null,
+                                                    0,
+                                                    0,
+                                                    0,
+                                                    0,
+                                                    10),
+                                            Arrays.asList(
+                                                    "INTEGER",
+                                                    Types.INTEGER,
+                                                    0,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    DatabaseMetaData.typeNullable,
+                                                    0,
+                                                    DatabaseMetaData.typeSearchable,
+                                                    0,
+                                                    0,
+                                                    1,
+                                                    null,
+                                                    0,
+                                                    0,
+                                                    0,
+                                                    0,
+                                                    10),
+                                            Arrays.asList(
+                                                    "NULL",
+                                                    Types.NULL,
+                                                    0,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    DatabaseMetaData.typeNullable,
+                                                    0,
+                                                    DatabaseMetaData.typeSearchable,
+                                                    1,
+                                                    0,
+                                                    0,
+                                                    null,
+                                                    0,
+                                                    0,
+                                                    0,
+                                                    0,
+                                                    10),
+                                            Arrays.asList(
+                                                    "REAL",
+                                                    Types.REAL,
+                                                    0,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    DatabaseMetaData.typeNullable,
+                                                    0,
+                                                    DatabaseMetaData.typeSearchable,
+                                                    0,
+                                                    0,
+                                                    0,
+                                                    null,
+                                                    0,
+                                                    0,
+                                                    0,
+                                                    0,
+                                                    10),
+                                            Arrays.asList(
+                                                    "TEXT",
+                                                    Types.VARCHAR,
+                                                    0,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    DatabaseMetaData.typeNullable,
+                                                    1,
+                                                    DatabaseMetaData.typeSearchable,
+                                                    1,
+                                                    0,
+                                                    0,
+                                                    null,
+                                                    0,
+                                                    0,
+                                                    0,
+                                                    0,
+                                                    10)))
+                            + " order by TYPE_NAME";
+            getTypeInfo = conn.prepareStatement(sql);
         }
 
         getTypeInfo.clearParameters();
@@ -1846,13 +1938,13 @@ public abstract class JDBC3DatabaseMetaData extends org.sqlite.core.CoreDatabase
 
     /** Not implemented yet. */
     public Struct createStruct(String t, Object[] attr) throws SQLException {
-        throw new SQLException("Not yet implemented by SQLite JDBC driver");
+        throw new SQLFeatureNotSupportedException("Not yet implemented by SQLite JDBC driver");
     }
 
     /** Not implemented yet. */
     public ResultSet getFunctionColumns(String a, String b, String c, String d)
             throws SQLException {
-        throw new SQLException("Not yet implemented by SQLite JDBC driver");
+        throw new SQLFeatureNotSupportedException("Not yet implemented by SQLite JDBC driver");
     }
 
     // inner classes

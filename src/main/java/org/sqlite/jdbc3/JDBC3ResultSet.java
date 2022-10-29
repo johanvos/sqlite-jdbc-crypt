@@ -9,6 +9,7 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.sql.Time;
@@ -135,8 +136,8 @@ public abstract class JDBC3ResultSet extends CoreResultSet {
     }
 
     /** @see java.sql.ResultSet#isLast() */
-    public boolean isLast() throws SQLException { // FIXME
-        throw new SQLException("function not yet implemented for SQLite");
+    public boolean isLast() throws SQLException {
+        throw new SQLFeatureNotSupportedException("not supported by sqlite");
     }
 
     /** @see java.sql.ResultSet#getRow() */
@@ -153,29 +154,20 @@ public abstract class JDBC3ResultSet extends CoreResultSet {
 
     /** @see java.sql.ResultSet#getBigDecimal(int) */
     public BigDecimal getBigDecimal(int col) throws SQLException {
-        final int columnType = getColumnType(col);
-
-        if (columnType == Types.INTEGER) {
-            long decimal = getLong(col);
-            return BigDecimal.valueOf(decimal);
-        } else if (columnType == Types.FLOAT || columnType == Types.DOUBLE) {
-            final double decimal = getDouble(col);
-            if (Double.isNaN(decimal)) {
-                throw new SQLException("Bad value for type BigDecimal : Not a Number");
-            } else {
-                return BigDecimal.valueOf(decimal);
-            }
-        } else {
-            final String stringValue = getString(col);
-            if (stringValue == null) {
+        switch (safeGetColumnType(checkCol(col))) {
+            case SQLITE_NULL:
                 return null;
-            } else {
+            case SQLITE_FLOAT:
+                return BigDecimal.valueOf(safeGetDoubleCol(col));
+            case SQLITE_INTEGER:
+                return BigDecimal.valueOf(safeGetLongCol(col));
+            default:
+                final String stringValue = safeGetColumnText(col);
                 try {
                     return new BigDecimal(stringValue);
                 } catch (NumberFormatException e) {
                     throw new SQLException("Bad value for type BigDecimal : " + stringValue);
                 }
-            }
         }
     }
 
@@ -826,7 +818,7 @@ public abstract class JDBC3ResultSet extends CoreResultSet {
     /** @see java.sql.ResultSetMetaData#isNullable(int) */
     public int isNullable(int col) throws SQLException {
         checkMeta();
-        return meta[checkCol(col)][1]
+        return meta[checkCol(col)][0]
                 ? ResultSetMetaData.columnNoNulls
                 : ResultSetMetaData.columnNullable;
     }
