@@ -16,6 +16,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
+import java.time.Instant;
 import java.util.Calendar;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -142,11 +143,44 @@ public class StatementTest {
     }
 
     @Test
+    public void gh_809_execute_reuseStatement() throws SQLException {
+        for (int i = 0; i < 2; i++) {
+            assertThat(stat.execute("select 1")).isTrue();
+
+            try (ResultSet rs = stat.getResultSet()) {
+                assertThat(rs).isNotNull();
+                assertThat(rs.next()).isTrue();
+                assertThat(rs.getInt(1)).isEqualTo(1);
+                assertThat(rs.next()).isFalse();
+            }
+
+            assertThat(stat.getMoreResults()).isFalse();
+            assertThat(stat.getUpdateCount()).isEqualTo(-1);
+        }
+    }
+
+    @Test
+    public void gh_809_executeQuery_reuseStatement() throws SQLException {
+        for (int i = 0; i < 2; i++) {
+            ResultSet rs = stat.executeQuery("select 1");
+
+            assertThat(rs).isNotNull();
+            assertThat(rs.next()).isTrue();
+            assertThat(rs.getInt(1)).isEqualTo(1);
+            assertThat(rs.next()).isFalse();
+
+            assertThat(stat.getMoreResults()).isFalse();
+            assertThat(stat.getUpdateCount()).isEqualTo(-1);
+        }
+    }
+
+    @Test
     public void executeUpdateCount() throws SQLException {
         assertThat(stat.execute("create table test (c1);")).isFalse();
 
         Statement stat2 = conn.createStatement();
         assertThat(stat2.execute("insert into test values('abc'),('def');")).isFalse();
+        assertThat(stat2.getUpdateCount()).isEqualTo(2);
         assertThat(stat2.getMoreResults()).isFalse();
         assertThat(stat2.getUpdateCount()).isEqualTo(-1);
 
@@ -583,5 +617,13 @@ public class StatementTest {
     @Test
     public void getFetchDirection() throws SQLException {
         assertThat(stat.getFetchDirection()).isEqualTo(ResultSet.FETCH_FORWARD);
+    }
+
+    @Test
+    public void unixepoch() throws SQLException {
+        ResultSet rs = stat.executeQuery("select unixepoch()");
+        long javaEpoch = Instant.now().getEpochSecond();
+
+        assertThat(rs.getLong(1)).isCloseTo(javaEpoch, offset(1L));
     }
 }
