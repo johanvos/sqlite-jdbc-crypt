@@ -1,8 +1,7 @@
 package org.sqlite.mc;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,27 +42,23 @@ class SQLiteMCSqlCipherConfigTest {
     @Test
     void withRawUnsaltedKey() {
         SQLiteMCSqlCipherConfig config = new SQLiteMCSqlCipherConfig();
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> config.withRawUnsaltedKey(toBytes(unsaltedHexKeyInvalid)));
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> config.withRawUnsaltedKey(toBytes(unsaltedHexKeyInvalid)));
 
         config.withRawUnsaltedKey(toBytes(unsaltedHexKeyValid));
-        assertEquals(
-                config.build().toProperties().getProperty(SQLiteConfig.Pragma.KEY.pragmaName),
-                ("x'" + unsaltedHexKeyValid + "'"));
+        assertThat(config.build().toProperties().getProperty(SQLiteConfig.Pragma.KEY.pragmaName))
+                .isEqualTo(("x'" + unsaltedHexKeyValid + "'"));
     }
 
     @Test
     void withRawSaltedKey() {
         SQLiteMCSqlCipherConfig config = new SQLiteMCSqlCipherConfig();
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> config.withRawSaltedKey(toBytes(saltedHexKeyInvalid)));
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> config.withRawSaltedKey(toBytes(saltedHexKeyInvalid)));
 
         config.withRawSaltedKey(toBytes(saltedHexKeyValid));
-        assertEquals(
-                config.build().toProperties().getProperty(SQLiteConfig.Pragma.KEY.pragmaName),
-                ("x'" + saltedHexKeyValid + "'"));
+        assertThat(config.build().toProperties().getProperty(SQLiteConfig.Pragma.KEY.pragmaName))
+                .isEqualTo(("x'" + saltedHexKeyValid + "'"));
     }
 
     @Test
@@ -73,10 +68,9 @@ class SQLiteMCSqlCipherConfigTest {
 
         Properties buildedConfig = config.build().toProperties();
 
-        assertEquals(buildedConfig.getProperty(SQLiteConfig.Pragma.KEY.pragmaName), hexKey);
-        assertEquals(
-                buildedConfig.getProperty(SQLiteConfig.Pragma.HEXKEY_MODE.pragmaName),
-                SQLiteConfig.HexKeyMode.SSE.getValue());
+        assertThat(buildedConfig.getProperty(SQLiteConfig.Pragma.KEY.pragmaName)).isEqualTo(hexKey);
+        assertThat(buildedConfig.getProperty(SQLiteConfig.Pragma.HEXKEY_MODE.pragmaName))
+                .isEqualTo(SQLiteConfig.HexKeyMode.SSE.getValue());
     }
 
     @Test
@@ -92,17 +86,16 @@ class SQLiteMCSqlCipherConfigTest {
         con.createStatement().execute(String.format("PRAGMA hexrekey='%s'", hexKey2));
         con.close();
 
-        assertThrows(
-                SQLException.class,
-                () ->
-                        config.withHexKey(hexKey)
-                                .build()
-                                .createConnection("jdbc:sqlite:file:" + tmpFile.getAbsolutePath()));
+        assertThatExceptionOfType(SQLException.class)
+                .isThrownBy(
+                        () ->
+                                config.withHexKey(hexKey)
+                                        .build()
+                                        .createConnection(
+                                                "jdbc:sqlite:file:" + tmpFile.getAbsolutePath()));
 
-        assertDoesNotThrow(
-                () ->
-                        config.withHexKey(hexKey2)
-                                .build()
-                                .createConnection("jdbc:sqlite:file:" + tmpFile.getAbsolutePath()));
+        config.withHexKey(hexKey2)
+                .build()
+                .createConnection("jdbc:sqlite:file:" + tmpFile.getAbsolutePath());
     }
 }

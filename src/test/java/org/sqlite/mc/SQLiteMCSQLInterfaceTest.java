@@ -1,8 +1,6 @@
 package org.sqlite.mc;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,10 +30,11 @@ public class SQLiteMCSQLInterfaceTest {
             ResultSet resultSet = st.executeQuery("SELECT count(*) as nb FROM sqlite_master");
             resultSet.next();
             // System.out.println("The out is : " + resultSet.getString("nb"));
-            assertEquals(
-                    "1",
-                    resultSet.getString("nb"),
-                    "When reading the database, the result should contain the number 1");
+            assertThat(resultSet.getString("nb")).isEqualTo("1");
+            //                    "1",
+            //                    ,
+            //                    "When reading the database, the result should contain the number
+            // 1");
             return true;
         } catch (SQLException e) {
             // System.out.println(e.getMessage());
@@ -77,7 +76,8 @@ public class SQLiteMCSQLInterfaceTest {
 
         // 2. Ensure another Connection can read the databse written
         Connection c = plainDatabaseOpen(path);
-        assertTrue(databaseIsReadable(c), "The plain database should be always readable");
+        assertThat(databaseIsReadable(c))
+                .isTrue(); // , "The plain database should be always readable");
         c.close();
     }
 
@@ -104,40 +104,44 @@ public class SQLiteMCSQLInterfaceTest {
 
         // 2. Ensure db is readable with good Password
         Connection c = cipherDatabaseOpen(config, path, Key1);
-        assertTrue(
-                databaseIsReadable(c),
-                String.format(
-                        "1. Be sure the database with config %s can be read with the key '%s'",
-                        config.getClass().getSimpleName(), Key1));
+
+        assertThat(databaseIsReadable(c)).isTrue(); // ,
+        //                String.format(
+        //                        "1. Be sure the database with config %s can be read with the key
+        // '%s'",
+        //                        config.getClass().getSimpleName(), Key1));
         c.close();
 
         // 3. Ensure db is not readable without the good password (Using Key2 as password)
         c = cipherDatabaseOpen(config, path, Key2);
-        assertNull(
-                c,
-                String.format(
-                        "2 Be sure the database with config %s cannot be read with the key '%s' (good key is %s)",
-                        config.getClass().getSimpleName(), Key2, Key1));
+        assertThat(c).isNull();
+        //        ,
+        //                String.format(
+        //                        "2 Be sure the database with config %s cannot be read with the key
+        // '%s' (good key is %s)",
+        //                        config.getClass().getSimpleName(), Key2, Key1));
 
         // 4. Rekey the database
         c = cipherDatabaseOpen(config, path, Key1);
-        assertTrue(
-                databaseIsReadable(c),
-                String.format(
-                        "3. Be sure the database with config %s can be read before rekeying with the key '%s' (replacing %s with %s)",
-                        config.getClass().getSimpleName(), Key2, Key1, Key2));
+        assertThat(databaseIsReadable(c)).isTrue();
+        //        ,
+        //                String.format(
+        //                        "3. Be sure the database with config %s can be read before
+        // rekeying with the key '%s' (replacing %s with %s)",
+        //                        config.getClass().getSimpleName(), Key2, Key1, Key2));
         c.createStatement().execute(String.format("PRAGMA rekey='%s'", Key2));
-        assertTrue(
-                databaseIsReadable(c), "4. Be sure the database is still readable after rekeying");
+        assertThat(databaseIsReadable(c)).isTrue();
+        // , "4. Be sure the database is still readable after rekeying");
         c.close();
 
         // 5. Should now be readable with Key2
         c = cipherDatabaseOpen(config, path, Key2);
-        assertTrue(
-                databaseIsReadable(c),
-                String.format(
-                        "5. Should now be able to open the database with config %s and the new key '%s'",
-                        config.getClass().getSimpleName(), Key2));
+        assertThat(databaseIsReadable(c)).isTrue();
+        //        ,
+        //                String.format(
+        //                        "5. Should now be able to open the database with config %s and the
+        // new key '%s'",
+        //                        config.getClass().getSimpleName(), Key2));
         c.close();
     }
 
@@ -157,11 +161,12 @@ public class SQLiteMCSQLInterfaceTest {
 
         // 2. Ensure db is readable with good Password
         Connection c = cipherDatabaseOpen(config, dbfile, Key1);
-        assertTrue(
-                databaseIsReadable(c),
-                String.format(
-                        "1. Be sure the database with config %s can be read with the key '%s'",
-                        config.getClass().getSimpleName(), Key1));
+        assertThat(databaseIsReadable(c)).isTrue();
+        //                ,
+        //                String.format(
+        //                        "1. Be sure the database with config %s can be read with the key
+        // '%s'",
+        //                        config.getClass().getSimpleName(), Key1));
         c.close();
     }
 
@@ -175,11 +180,12 @@ public class SQLiteMCSQLInterfaceTest {
 
         // 2. Ensure db is readable with good Password
         Connection c = cipherDatabaseOpen(config, dbfile, Key1);
-        assertTrue(
-                databaseIsReadable(c),
-                String.format(
-                        "1. Be sure the database with config %s can be read with the key '%s'",
-                        config.getClass().getSimpleName(), Key1));
+        assertThat(databaseIsReadable(c)).isTrue();
+        //        ,
+        //                String.format(
+        //                        "1. Be sure the database with config %s can be read with the key
+        // '%s'",
+        //                        config.getClass().getSimpleName(), Key1));
         c.close();
     }
 
@@ -221,40 +227,44 @@ public class SQLiteMCSQLInterfaceTest {
 
         // 2. Ensure db is readable with good Password
         Connection c = cipherDatabaseOpen(config, path, Key1);
-        assertTrue(
-                databaseIsReadable(c),
-                String.format(
-                        "1. Be sure the database with config %s can be read with the key '%s'",
-                        config.getClass().getSimpleName(), Key1));
+        assertThat(databaseIsReadable(c)).isTrue();
+        //                ,
+        //                String.format(
+        //                        "1. Be sure the database with config %s can be read with the key
+        // '%s'",
+        //                        config.getClass().getSimpleName(), Key1));
         c.close();
 
         // 3. Ensure db is not readable without the good password (Using Key2 as password)
         c = cipherDatabaseOpen(config, path, Key2);
-        assertNull(
-                c,
-                String.format(
-                        "2 Be sure the database with config %s cannot be read with the key '%s' (good key is %s)",
-                        config.getClass().getSimpleName(), Key2, Key1));
+        assertThat(c).isNull();
+        //        ,
+        //                String.format(
+        //                        "2 Be sure the database with config %s cannot be read with the key
+        // '%s' (good key is %s)",
+        //                        config.getClass().getSimpleName(), Key2, Key1));
 
         // 4. Rekey the database
         c = cipherDatabaseOpen(config, path, Key1);
-        assertTrue(
-                databaseIsReadable(c),
-                String.format(
-                        "3. Be sure the database with config %s can be read before rekeying with the key '%s' (replacing %s with %s)",
-                        config.getClass().getSimpleName(), Key2, Key1, Key2));
+        assertThat(databaseIsReadable(c)).isTrue();
+        //                ,
+        //                String.format(
+        //                        "3. Be sure the database with config %s can be read before
+        // rekeying with the key '%s' (replacing %s with %s)",
+        //                        config.getClass().getSimpleName(), Key2, Key1, Key2));
         c.createStatement().execute(String.format("PRAGMA rekey=%s", Key2));
-        assertTrue(
-                databaseIsReadable(c), "4. Be sure the database is still readable after rekeying");
+        assertThat(databaseIsReadable(c)).isTrue();
+        //                , "4. Be sure the database is still readable after rekeying");
         c.close();
 
         // 5. Should now be readable with Key2
         c = cipherDatabaseOpen(config, path, Key2);
-        assertTrue(
-                databaseIsReadable(c),
-                String.format(
-                        "5. Should now be able to open the database with config %s and the new key '%s'",
-                        config.getClass().getSimpleName(), Key2));
+        assertThat(databaseIsReadable(c)).isTrue();
+        //        ,
+        //                String.format(
+        //                        "5. Should now be able to open the database with config %s and the
+        // new key '%s'",
+        //                        config.getClass().getSimpleName(), Key2));
         c.close();
     }
 
@@ -265,27 +275,29 @@ public class SQLiteMCSQLInterfaceTest {
         cipherDatabaseCreate(new SQLiteMCConfig.Builder(), dbfile, key);
 
         Connection c = cipherDatabaseOpen(new SQLiteMCConfig.Builder(), dbfile, key);
-        assertTrue(databaseIsReadable(c), "Crosstest : Should be able to read the base db");
+        assertThat(databaseIsReadable(c))
+                .isTrue(); // , "Crosstest : Should be able to read the base db");
         c.close();
 
         c = cipherDatabaseOpen(SQLiteMCRC4Config.getDefault(), dbfile, key);
-        assertNull(c, "Should not be readable with RC4");
+        assertThat(c).isNull(); // , "Should not be readable with RC4");
         //        c.close();
 
         c = cipherDatabaseOpen(SQLiteMCSqlCipherConfig.getDefault(), dbfile, key);
-        assertNull(c, "Should not be readable with SQLCipher");
+        assertThat(c).isNull(); // , "Should not be readable with SQLCipher");
         //        c.close();
 
         c = cipherDatabaseOpen(SQLiteMCWxAES128Config.getDefault(), dbfile, key);
-        assertNull(c, "Should not be readable with Wx128bit");
+        assertThat(c).isNull(); // , "Should not be readable with Wx128bit");
         //        c.close();
 
         c = cipherDatabaseOpen(SQLiteMCWxAES256Config.getDefault(), dbfile, key);
-        assertNull(c, "Should not be readable with Wx256");
+        assertThat(c).isNull(); // , "Should not be readable with Wx256");
         //        c.close();
 
         c = cipherDatabaseOpen(SQLiteMCChacha20Config.getDefault(), dbfile, key);
-        assertTrue(databaseIsReadable(c), "Should be readable with Chacha20 as it is default");
+        assertThat(databaseIsReadable(c))
+                .isTrue(); // , "Should be readable with Chacha20 as it is default");
         //        c.close();
     }
 }
