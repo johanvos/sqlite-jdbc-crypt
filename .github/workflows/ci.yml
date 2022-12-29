@@ -45,7 +45,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
-        java: [ 8, 17, 18 ]
+        java: [ 11, 17, 18 ]
         include:
           - os: windows-latest
             java: 18
@@ -78,34 +78,34 @@ jobs:
       - name: Test
         run: mvn --batch-mode --no-transfer-progress test
 
-  test_graalvm:
-    name: test ubuntu-latest jdk11 GraalVM native-image
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: DeLaGuardo/setup-graalvm@master
-        with:
-          # GraalVM version, no pattern syntax available atm
-          graalvm: '21.0.0.2'
-          # Java version, optional, defaults to 'java8'. Available options are 'java8' and 'java11'.
-          java: 'java11'
-          # Architecture flag, optional, defaults to 'amd64'. Available options are 'amd64' and 'aarch64'. Later is available only for linux runners.
-          arch: 'amd64'
-      - name: Install native-image component
-        run: |
-          gu install native-image
-
-      - name: Source versions from VERSION file
-        run: cat VERSION >> $GITHUB_ENV
-
-      - name: Display version
-        run: echo $sqliteMCVersion $version $artifactVersion
-
-      - name: Build natives
-        run: make jni-header native
-
-      - name: Test
-        run: mvn --batch-mode --no-transfer-progress -P native test
+#  test_graalvm:
+#    name: test ubuntu-latest jdk11 GraalVM native-image
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v3
+#      - uses: DeLaGuardo/setup-graalvm@master
+#        with:
+#          # GraalVM version, no pattern syntax available atm
+#          graalvm: '21.0.0.2'
+#          # Java version, optional, defaults to 'java8'. Available options are 'java8' and 'java11'.
+#          java: 'java11'
+#          # Architecture flag, optional, defaults to 'amd64'. Available options are 'amd64' and 'aarch64'. Later is available only for linux runners.
+#          arch: 'amd64'
+#      - name: Install native-image component
+#        run: |
+#          gu install native-image
+#
+#      - name: Source versions from VERSION file
+#        run: cat VERSION >> $GITHUB_ENV
+#
+#      - name: Display version
+#        run: echo $sqliteMCVersion $version $artifactVersion
+#
+#      - name: Build natives
+#        run: make jni-header native
+#
+#      - name: Test
+#        run: mvn --batch-mode --no-transfer-progress -P native test
 
   test_multiarch:
     name: test ${{ matrix.arch }} ${{ matrix.distro }} jdk${{ matrix.java }}

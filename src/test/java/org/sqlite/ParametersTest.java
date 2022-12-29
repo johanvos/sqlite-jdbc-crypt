@@ -1,6 +1,6 @@
 package org.sqlite;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.sql.*;
@@ -32,16 +32,18 @@ public class ParametersTest {
                 checkPragma(stat, "journal_mode", "truncate");
                 checkPragma(stat, "synchronous", "2");
                 checkPragma(stat, "cache_size", "-65536");
-                assertFalse(
-                        ((SQLiteConnection) stat.getConnection())
-                                .getDatabase()
-                                .getConfig()
-                                .isEnabledSharedCache());
-                assertTrue(
-                        ((SQLiteConnection) stat.getConnection())
-                                .getDatabase()
-                                .getConfig()
-                                .isEnabledSharedCacheConnection());
+                assertThat(
+                                ((SQLiteConnection) stat.getConnection())
+                                        .getDatabase()
+                                        .getConfig()
+                                        .isEnabledSharedCache())
+                        .isFalse();
+                assertThat(
+                                ((SQLiteConnection) stat.getConnection())
+                                        .getDatabase()
+                                        .getConfig()
+                                        .isEnabledSharedCacheConnection())
+                        .isTrue();
             }
         }
     }
@@ -64,16 +66,18 @@ public class ParametersTest {
                 checkPragma(stat, "journal_mode", "truncate");
                 checkPragma(stat, "synchronous", "2");
                 checkPragma(stat, "cache_size", "-65536");
-                assertFalse(
-                        ((SQLiteConnection) stat.getConnection())
-                                .getDatabase()
-                                .getConfig()
-                                .isEnabledSharedCache());
-                assertFalse(
-                        ((SQLiteConnection) stat.getConnection())
-                                .getDatabase()
-                                .getConfig()
-                                .isEnabledSharedCacheConnection());
+                assertThat(
+                                ((SQLiteConnection) stat.getConnection())
+                                        .getDatabase()
+                                        .getConfig()
+                                        .isEnabledSharedCache())
+                        .isFalse();
+                assertThat(
+                                ((SQLiteConnection) stat.getConnection())
+                                        .getDatabase()
+                                        .getConfig()
+                                        .isEnabledSharedCacheConnection())
+                        .isFalse();
             }
         }
     }
@@ -82,7 +86,7 @@ public class ParametersTest {
         try (ResultSet resultSet = stat.executeQuery("pragma " + key + ";")) {
             resultSet.next();
             String value = resultSet.getString(1);
-            assertEquals(expectedValue, value);
+            assertThat(value).isEqualTo(expectedValue);
         }
     }
 }

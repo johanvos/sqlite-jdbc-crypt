@@ -1,6 +1,7 @@
 package org.sqlite.mc;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.math.BigInteger;
 import org.junit.jupiter.api.Test;
@@ -33,26 +34,22 @@ class SQLiteMCChacha20ConfigTest {
     @Test
     void withRawUnsaltedKey() {
         SQLiteMCChacha20Config config = new SQLiteMCChacha20Config();
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> config.withRawUnsaltedKey(toBytes(unsaltedHexKeyInvalid)));
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> config.withRawUnsaltedKey(toBytes(unsaltedHexKeyInvalid)));
 
         config.withRawUnsaltedKey(toBytes(unsaltedHexKeyValid));
-        assertEquals(
-                config.build().toProperties().getProperty(SQLiteConfig.Pragma.KEY.pragmaName),
-                ("raw:" + unsaltedHexKeyValid));
+        assertThat(config.build().toProperties().getProperty(SQLiteConfig.Pragma.KEY.pragmaName))
+                .isEqualTo(("raw:" + unsaltedHexKeyValid));
     }
 
     @Test
     void withRawSaltedKey() {
         SQLiteMCChacha20Config config = new SQLiteMCChacha20Config();
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> config.withRawSaltedKey(toBytes(saltedHexKeyInvalid)));
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> config.withRawSaltedKey(toBytes(saltedHexKeyInvalid)));
 
         config.withRawSaltedKey(toBytes(saltedHexKeyValid));
-        assertEquals(
-                config.build().toProperties().getProperty(SQLiteConfig.Pragma.KEY.pragmaName),
-                ("raw:" + saltedHexKeyValid));
+        assertThat(config.build().toProperties().getProperty(SQLiteConfig.Pragma.KEY.pragmaName))
+                .isEqualTo(("raw:" + saltedHexKeyValid));
     }
 }

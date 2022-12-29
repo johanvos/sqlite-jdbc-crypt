@@ -42,6 +42,8 @@ public abstract class CoreResultSet implements Codes {
     protected int limitRows;
     /** number of current row, starts at 1 (0 is for before loading data) */
     protected int row = 0;
+
+    protected boolean pastLastRow = false;
     /** last column accessed, for wasNull(). -1 if none */
     protected int lastCol;
 
@@ -92,7 +94,7 @@ public abstract class CoreResultSet implements Codes {
      */
     public int checkCol(int col) throws SQLException {
         if (colsMeta == null) {
-            throw new IllegalStateException("SQLite JDBC: inconsistent internal state");
+            throw new SQLException("SQLite JDBC: inconsistent internal state");
         }
         if (col < 1 || col > colsMeta.length) {
             throw new SQLException("column " + col + " out of bounds [1," + colsMeta.length + "]");
@@ -108,7 +110,6 @@ public abstract class CoreResultSet implements Codes {
      * @throws SQLException
      */
     protected int markCol(int col) throws SQLException {
-        checkOpen();
         checkCol(col);
         lastCol = col;
         return --col;
@@ -128,6 +129,7 @@ public abstract class CoreResultSet implements Codes {
         meta = null;
         limitRows = 0;
         row = 0;
+        pastLastRow = false;
         lastCol = -1;
         columnNameToIndex = null;
         emptyResultSet = false;

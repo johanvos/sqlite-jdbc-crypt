@@ -732,4 +732,49 @@ public class PrepStmtTest {
 
         assertThatNoException().isThrownBy(ps::clearParameters);
     }
+
+    @Test
+    public void gh810_getMoreResults_and_getUpdateCount() throws SQLException {
+        stat.executeUpdate("create table t(i int)");
+
+        PreparedStatement ps = conn.prepareStatement("update t set i = 0 where false");
+        assertThat(ps.execute()).isFalse();
+        assertThat(ps.getUpdateCount()).isEqualTo(0);
+        assertThat(ps.getMoreResults()).isFalse();
+        assertThat(ps.getUpdateCount()).isEqualTo(-1);
+    }
+
+    @Test
+    public void executeUpdateCount() throws SQLException {
+        PreparedStatement ps1 = conn.prepareStatement("create table test (c1)");
+        assertThat(ps1.execute()).isFalse();
+
+        PreparedStatement ps2 = conn.prepareStatement("insert into test values('abc'),('def')");
+        assertThat(ps2.execute()).isFalse();
+        assertThat(ps2.getUpdateCount()).isEqualTo(2);
+        assertThat(ps2.getMoreResults()).isFalse();
+        assertThat(ps2.getUpdateCount()).isEqualTo(-1);
+
+        assertThat(ps1.getUpdateCount()).isEqualTo(0);
+        assertThat(ps1.getMoreResults()).isFalse();
+        assertThat(ps1.getUpdateCount()).isEqualTo(-1);
+    }
+
+    @Test
+    public void gh811_getMetadata_before_execution() throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement("select 1")) {
+            ps.executeQuery();
+            ResultSetMetaData meta = ps.getMetaData();
+            assertThat(meta).isNotNull();
+            assertThat(meta.getColumnCount()).isEqualTo(1);
+            assertThat(meta.getColumnClassName(1)).isEqualTo("java.lang.Integer");
+        }
+
+        try (PreparedStatement ps = conn.prepareStatement("select 1")) {
+            ResultSetMetaData meta = ps.getMetaData();
+            assertThat(meta).isNotNull();
+            assertThat(meta.getColumnCount()).isEqualTo(1);
+            assertThat(meta.getColumnClassName(1)).isEqualTo("java.lang.Object");
+        }
+    }
 }
