@@ -177,10 +177,10 @@ linux64: $(SQLITE_UNPACKED) jni-header
 	docker run $(DOCKER_RUN_OPTS) -u "$(BUILDER_UID):$(BUILDER_GID)" -v $$PWD:/work gillena/sqlite-build-env bash -c "make clean-native native OS_NAME=Linux OS_ARCH=x86_64"
 
 freebsd32: $(SQLITE_UNPACKED) jni-header
-	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/workdir empterdose/freebsd-cross-build:9.3 sh -c 'apk add bash; apk add openjdk8; apk add perl; make clean-native native OS_NAME=FreeBSD OS_ARCH=x86 CROSS_PREFIX=i386-freebsd9-'
+	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/workdir gotson/freebsd-cross-build:i686-11.4 sh -c 'make clean-native native OS_NAME=FreeBSD OS_ARCH=x86 CROSS_PREFIX=i686-unknown-freebsd11-'
 
 freebsd64: $(SQLITE_UNPACKED) jni-header
-	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/workdir empterdose/freebsd-cross-build:9.3 sh -c 'apk add bash; apk add openjdk8; apk add perl; make clean-native native OS_NAME=FreeBSD OS_ARCH=x86_64 CROSS_PREFIX=x86_64-freebsd9-'
+	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/workdir gotson/freebsd-cross-build:x86_64-11.4 sh -c 'make clean-native native OS_NAME=FreeBSD OS_ARCH=x86_64 CROSS_PREFIX=x86_64-unknown-freebsd11-'
 
 freebsd-arm64: $(SQLITE_UNPACKED) jni-header
 	docker run $(DOCKER_RUN_OPTS) -v $$PWD:/workdir gotson/freebsd-cross-build:aarch64-11.4 sh -c 'make clean-native native OS_NAME=FreeBSD OS_ARCH=aarch64 CROSS_PREFIX=aarch64-unknown-freebsd11-'
