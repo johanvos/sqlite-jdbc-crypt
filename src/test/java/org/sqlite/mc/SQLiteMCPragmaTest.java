@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import org.junit.jupiter.api.Test;
+import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteException;
 
 public class SQLiteMCPragmaTest {
@@ -269,5 +270,40 @@ public class SQLiteMCPragmaTest {
         assertThat(c).isNull(); // , "Should not be readable with RC4");
         assertThat(new File(dbfile).delete())
                 .isTrue(); // , "Connection must be closed, should be deleted");
+    }
+
+    @Test
+    public void settingsBeforeDbCreationMcConfig() throws Exception {
+        File testDB = File.createTempFile("test.db", "", new File("target"));
+        testDB.deleteOnExit();
+
+        for (boolean useSQLInterface : new boolean[] { true, false }) {
+            SQLiteMCConfig config =
+                    new SQLiteMCConfig.Builder()
+                            .withKey("abc")
+                            .useSQLInterface(useSQLInterface)
+                            .build();
+            config.setPageSize(65536);
+            config.setAutoVacuum(SQLiteConfig.AutoVacuum.INCREMENTAL);
+            config.setEncoding(SQLiteConfig.Encoding.UTF_16LE);
+            config.setJournalMode(SQLiteConfig.JournalMode.WAL);
+
+            String url = String.format("jdbc:sqlite:%s", testDB);
+            try (Connection conn = DriverManager.getConnection(url, config.toProperties());
+                 Statement stat = conn.createStatement()) {
+                try (ResultSet rs = stat.executeQuery("pragma page_size")) {
+                    assertThat(rs.getString(1)).isEqualTo("65536");
+                }
+                try (ResultSet rs = stat.executeQuery("pragma auto_vacuum")) {
+                    assertThat(rs.getString(1)).isEqualTo("2");
+                }
+                try (ResultSet rs = stat.executeQuery("pragma encoding")) {
+                    assertThat(rs.getString(1)).isEqualTo("UTF-16le");
+                }
+                try (ResultSet rs = stat.executeQuery("pragma journal_mode")) {
+                    assertThat(rs.getString(1)).isEqualTo("wal");
+                }
+            }
+        }
     }
 }

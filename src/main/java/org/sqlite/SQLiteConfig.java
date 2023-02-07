@@ -28,11 +28,7 @@ import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -226,10 +222,25 @@ public class SQLiteConfig {
         }
     }
 
+    /**
+     * Applies the remaining Pragmas.
+     *
+     * There are some Pragmas which must be executed before any other Statements/Pragmas.
+     * See <a href="https://www.mail-archive.com/sqlite-users@mailinglists.sqlite.org/msg119220.html">https://www.mail-archive.com/sqlite-users@mailinglists.sqlite.org/msg119220.html</a>
+     * and <a href="https://www.sqlite.org/pragma.html#pragma_auto_vacuum">https://www.sqlite.org/pragma.html#pragma_auto_vacuum</a>
+     * Important: PAGE_SIZE must be the first one
+     */
     protected void applyRemainingPragmas(Connection conn, HashSet<String> pragmaParams)
             throws SQLException {
+        LinkedHashSet<Object> orderedPragmaTable = new LinkedHashSet<>();
+        orderedPragmaTable.add(Pragma.PAGE_SIZE.getPragmaName());
+        orderedPragmaTable.add(Pragma.AUTO_VACUUM.getPragmaName());
+        orderedPragmaTable.add(Pragma.ENCODING.getPragmaName());
+        pragmaTable.keySet().stream()
+                .filter(item -> !orderedPragmaTable.contains(item))
+                .forEach(orderedPragmaTable::add);
         try (Statement stat = conn.createStatement()) {
-            for (Object each : pragmaTable.keySet()) {
+            for (Object each : orderedPragmaTable) {
                 String key = each.toString();
                 if (!pragmaParams.contains(key)) {
                     continue;

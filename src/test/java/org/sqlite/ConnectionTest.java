@@ -428,7 +428,7 @@ public class ConnectionTest {
         Statement stat = conn.createStatement();
 
         ResultSet rs = stat.executeQuery("pragma auto_vacuum");
-        assertThat("2").isEqualTo(rs.getString(1));
+        assertThat(rs.getString(1)).isEqualTo("2");
         rs.close();
 
         stat.close();
@@ -445,7 +445,7 @@ public class ConnectionTest {
         Statement stat = conn.createStatement();
 
         ResultSet rs = stat.executeQuery("pragma auto_vacuum");
-        assertThat("1").isEqualTo(rs.getString(1));
+        assertThat(rs.getString(1)).isEqualTo("1");
         rs.close();
 
         stat.close();
@@ -463,10 +463,102 @@ public class ConnectionTest {
         Statement stat = conn.createStatement();
 
         ResultSet rs = stat.executeQuery("pragma auto_vacuum");
-        assertThat("2").isEqualTo(rs.getString(1));
+        assertThat(rs.getString(1)).isEqualTo("2");
         rs.close();
 
         stat.close();
         conn.close();
+    }
+
+    @Test
+    public void settingsBeforeDbCreationProperties() throws Exception {
+        File testDB = File.createTempFile("test.db", "", new File("target"));
+        testDB.deleteOnExit();
+
+        Properties props = new Properties();
+        props.setProperty(
+                SQLiteConfig.Pragma.AUTO_VACUUM.pragmaName,
+                SQLiteConfig.AutoVacuum.INCREMENTAL.name());
+        props.setProperty(
+                SQLiteConfig.Pragma.ENCODING.pragmaName,
+                SQLiteConfig.Encoding.UTF_16LE.typeName);
+        props.setProperty(
+                Pragma.PAGE_SIZE.pragmaName,
+                "65536");
+        props.setProperty(
+                Pragma.JOURNAL_MODE.pragmaName,
+                JournalMode.WAL.name());
+
+        try (Connection conn = DriverManager.getConnection(String.format("jdbc:sqlite:%s", testDB), props);
+             Statement stat = conn.createStatement()) {
+            try (ResultSet rs = stat.executeQuery("pragma page_size")) {
+                assertThat(rs.getString(1)).isEqualTo("65536");
+            }
+            try (ResultSet rs = stat.executeQuery("pragma auto_vacuum")) {
+                assertThat(rs.getString(1)).isEqualTo("2");
+            }
+            try (ResultSet rs = stat.executeQuery("pragma encoding")) {
+                assertThat(rs.getString(1)).isEqualTo("UTF-16le");
+            }
+            try (ResultSet rs = stat.executeQuery("pragma journal_mode")) {
+                assertThat(rs.getString(1)).isEqualTo("wal");
+            }
+        }
+    }
+
+    @Test
+    public void settingsBeforeDbCreationUrl() throws Exception {
+        File testDB = File.createTempFile("test.db", "", new File("target"));
+        testDB.deleteOnExit();
+
+        String url = "jdbc:sqlite:%s" +
+                "?auto_vacuum=INCREMENTAL" +
+                "&encoding=UTF16le" +
+                "&page_size=65536" +
+                "&journal_mode=WAL";
+        try (Connection conn = DriverManager.getConnection(String.format(url, testDB));
+             Statement stat = conn.createStatement()) {
+            try (ResultSet rs = stat.executeQuery("pragma page_size")) {
+                assertThat(rs.getString(1)).isEqualTo("65536");
+            }
+            try (ResultSet rs = stat.executeQuery("pragma auto_vacuum")) {
+                assertThat(rs.getString(1)).isEqualTo("2");
+            }
+            try (ResultSet rs = stat.executeQuery("pragma encoding")) {
+                assertThat(rs.getString(1)).isEqualTo("UTF-16le");
+            }
+            try (ResultSet rs = stat.executeQuery("pragma journal_mode")) {
+                assertThat(rs.getString(1)).isEqualTo("wal");
+            }
+        }
+    }
+
+    @Test
+    public void settingsBeforeDbCreationConfig() throws Exception {
+        File testDB = File.createTempFile("test.db", "", new File("target"));
+        testDB.deleteOnExit();
+
+        SQLiteConfig config = new SQLiteConfig();
+        config.setPageSize(65536);
+        config.setAutoVacuum(SQLiteConfig.AutoVacuum.INCREMENTAL);
+        config.setEncoding(SQLiteConfig.Encoding.UTF_16LE);
+        config.setJournalMode(JournalMode.WAL);
+
+        String url = String.format("jdbc:sqlite:%s", testDB);
+        try (Connection conn = DriverManager.getConnection(url, config.toProperties());
+             Statement stat = conn.createStatement()) {
+            try (ResultSet rs = stat.executeQuery("pragma page_size")) {
+                assertThat(rs.getString(1)).isEqualTo("65536");
+            }
+            try (ResultSet rs = stat.executeQuery("pragma auto_vacuum")) {
+                assertThat(rs.getString(1)).isEqualTo("2");
+            }
+            try (ResultSet rs = stat.executeQuery("pragma encoding")) {
+                assertThat(rs.getString(1)).isEqualTo("UTF-16le");
+            }
+            try (ResultSet rs = stat.executeQuery("pragma journal_mode")) {
+                assertThat(rs.getString(1)).isEqualTo("wal");
+            }
+        }
     }
 }
