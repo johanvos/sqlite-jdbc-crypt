@@ -100,7 +100,7 @@ public class BackupTest {
                 Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("create table sample(id integer primary key autoincrement, name)");
             for (int i = 0; i < 10000; i++) {
-            stmt.executeUpdate("insert into sample(name) values('leo')");
+                stmt.executeUpdate("insert into sample(name) values('leo')");
             }
 
             File tmpFile = File.createTempFile("backup-test2", ".sqlite", tempDir);

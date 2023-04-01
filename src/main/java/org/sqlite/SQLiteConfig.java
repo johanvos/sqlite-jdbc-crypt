@@ -219,7 +219,7 @@ public class SQLiteConfig {
                     passwordPragma = "pragma key = '%s'";
                 }
                 stat.execute(String.format(passwordPragma, password.replace("'", "''")));
-                    stat.execute("select 1 from sqlite_schema");
+                stat.execute("select 1 from sqlite_schema");
             }
         }
     }
@@ -227,9 +227,10 @@ public class SQLiteConfig {
     /**
      * Applies the remaining Pragmas.
      *
-     * There are some Pragmas which must be executed before any other Statements/Pragmas.
-     * See <a href="https://www.mail-archive.com/sqlite-users@mailinglists.sqlite.org/msg119220.html">https://www.mail-archive.com/sqlite-users@mailinglists.sqlite.org/msg119220.html</a>
-     * and <a href="https://www.sqlite.org/pragma.html#pragma_auto_vacuum">https://www.sqlite.org/pragma.html#pragma_auto_vacuum</a>
+     * <p>There are some Pragmas which must be executed before any other Statements/Pragmas. See <a
+     * href="https://www.mail-archive.com/sqlite-users@mailinglists.sqlite.org/msg119220.html">https://www.mail-archive.com/sqlite-users@mailinglists.sqlite.org/msg119220.html</a>
+     * and <a
+     * href="https://www.sqlite.org/pragma.html#pragma_auto_vacuum">https://www.sqlite.org/pragma.html#pragma_auto_vacuum</a>
      * Important: PAGE_SIZE must be the first one
      */
     protected void applyRemainingPragmas(Connection conn, HashSet<String> pragmaParams)

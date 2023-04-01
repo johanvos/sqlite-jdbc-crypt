@@ -476,17 +476,14 @@ public class ConnectionTest {
                 SQLiteConfig.Pragma.AUTO_VACUUM.pragmaName,
                 SQLiteConfig.AutoVacuum.INCREMENTAL.name());
         props.setProperty(
-                SQLiteConfig.Pragma.ENCODING.pragmaName,
-                SQLiteConfig.Encoding.UTF_16LE.typeName);
-        props.setProperty(
-                Pragma.PAGE_SIZE.pragmaName,
-                "65536");
-        props.setProperty(
-                Pragma.JOURNAL_MODE.pragmaName,
-                JournalMode.WAL.name());
+                SQLiteConfig.Pragma.ENCODING.pragmaName, SQLiteConfig.Encoding.UTF_16LE.typeName);
+        props.setProperty(Pragma.PAGE_SIZE.pragmaName, "65536");
+        props.setProperty(Pragma.JOURNAL_MODE.pragmaName, JournalMode.WAL.name());
 
-        try (Connection conn = DriverManager.getConnection(String.format("jdbc:sqlite:%s", testDB), props);
-             Statement stat = conn.createStatement()) {
+        try (Connection conn =
+                        DriverManager.getConnection(
+                                String.format("jdbc:sqlite:%s", testDB), props);
+                Statement stat = conn.createStatement()) {
             try (ResultSet rs = stat.executeQuery("pragma page_size")) {
                 assertThat(rs.getString(1)).isEqualTo("65536");
             }
@@ -507,13 +504,14 @@ public class ConnectionTest {
         File testDB = File.createTempFile("test.db", "", new File("target"));
         testDB.deleteOnExit();
 
-        String url = "jdbc:sqlite:%s" +
-                "?auto_vacuum=INCREMENTAL" +
-                "&encoding=UTF16le" +
-                "&page_size=65536" +
-                "&journal_mode=WAL";
+        String url =
+                "jdbc:sqlite:%s"
+                        + "?auto_vacuum=INCREMENTAL"
+                        + "&encoding=UTF16le"
+                        + "&page_size=65536"
+                        + "&journal_mode=WAL";
         try (Connection conn = DriverManager.getConnection(String.format(url, testDB));
-             Statement stat = conn.createStatement()) {
+                Statement stat = conn.createStatement()) {
             try (ResultSet rs = stat.executeQuery("pragma page_size")) {
                 assertThat(rs.getString(1)).isEqualTo("65536");
             }
@@ -542,7 +540,7 @@ public class ConnectionTest {
 
         String url = String.format("jdbc:sqlite:%s", testDB);
         try (Connection conn = DriverManager.getConnection(url, config.toProperties());
-             Statement stat = conn.createStatement()) {
+                Statement stat = conn.createStatement()) {
             try (ResultSet rs = stat.executeQuery("pragma page_size")) {
                 assertThat(rs.getString(1)).isEqualTo("65536");
             }

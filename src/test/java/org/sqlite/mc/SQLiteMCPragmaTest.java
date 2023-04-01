@@ -277,7 +277,7 @@ public class SQLiteMCPragmaTest {
         File testDB = File.createTempFile("test.db", "", new File("target"));
         testDB.deleteOnExit();
 
-        for (boolean useSQLInterface : new boolean[] { true, false }) {
+        for (boolean useSQLInterface : new boolean[] {true, false}) {
             SQLiteMCConfig config =
                     new SQLiteMCConfig.Builder()
                             .withKey("abc")
@@ -290,7 +290,7 @@ public class SQLiteMCPragmaTest {
 
             String url = String.format("jdbc:sqlite:%s", testDB);
             try (Connection conn = DriverManager.getConnection(url, config.toProperties());
-                 Statement stat = conn.createStatement()) {
+                    Statement stat = conn.createStatement()) {
                 try (ResultSet rs = stat.executeQuery("pragma page_size")) {
                     assertThat(rs.getString(1)).isEqualTo("65536");
                 }
