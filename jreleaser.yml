@@ -8,7 +8,7 @@ release:
     changelog:
       links: true
       formatted: ALWAYS
-      format: '- {{commitTitle}} ({{commitShortHash}})'
+      format: '- {{#commitIsConventional}}{{#conventionalCommitIsBreakingChange}}🚨 {{/conventionalCommitIsBreakingChange}}{{#conventionalCommitScope}}**{{conventionalCommitScope}}**: {{/conventionalCommitScope}}{{conventionalCommitDescription}}{{#conventionalCommitBreakingChangeContent}}: *{{conventionalCommitBreakingChangeContent}}*{{/conventionalCommitBreakingChangeContent}} ({{commitShortHash}}){{/commitIsConventional}}{{^commitIsConventional}}{{commitTitle}} ({{commitShortHash}}){{/commitIsConventional}}{{#commitHasIssues}}, closes{{#commitIssues}} {{issue}}{{/commitIssues}}{{/commitHasIssues}}'
       preset: 'conventional-commits'
       skipMergeCommits: true
       excludeLabels:
@@ -17,6 +17,9 @@ release:
         - label: 'chore'
           title: '[maven-release-plugin] prepare'
           order: 1
+        - label: 'perf'
+          title: 'regex:^(?:perf(?:\(.*\))?!?):\s.*'
+          order: 120
       categories:
         - title: '🏎 Perf'
           key: 'perf'
@@ -25,6 +28,12 @@ release:
           order: 25
       hide:
         uncategorized: true
+        contributors:
+          - '[bot]'
+          - 'github-actions'
+          - 'GitHub'
+      extraProperties:
+        categorizeScopes: true
     issues:
       enabled: true
       comment: '🎉 This issue has been resolved in `{{tagName}}` ([Release Notes]({{releaseNotesUrl}}))'

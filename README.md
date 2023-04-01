@@ -1,10 +1,10 @@
 # SQLite JDBC Driver
-[![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/willena/sqlite-jdbc-crypt/CI/master)](https://github.com/willena/sqlite-jdbc-crypt/actions/workflows/build-release.yml?query=branch%3Amaster)
+[![GitHub Workflow Status (branch)](https://img.shields.io/github/actions/workflow/status/willena/sqlite-jdbc-crypt/ci.yml?branch=master)](https://github.com/willena/sqlite-jdbc-crypt/actions/workflows/build-release.yml?query=branch%3Amaster)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.willena/sqlite-jdbc/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.willena/sqlite-jdbc/)
 [![javadoc](https://javadoc.io/badge2/io.github.willena/sqlite-jdbc/javadoc.svg)](https://javadoc.io/doc/io.github.willena/sqlite-jdbc)
 [![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/io.github.willena/sqlite-jdbc?color=blue&label=maven%20snapshot&server=https%3A%2F%2Foss.sonatype.org%2F)](https://oss.sonatype.org/content/repositories/snapshots/io/github/willena/sqlite-jdbc/)
 
-SQLite JDBC is a library for accessing and creating [SQLite](http://sqlite.org) database files in Java.
+SQLite JDBC is a library for accessing and creating [SQLite](https://www.sqlite.org) database files in Java.
 
 This particular fork uses another native library that provides an implementation of SEE.
 the native library is provided by [Utelle](http://github.com/utelle) as part of the [SQLite3MultipleCiphers](https://github.com/utelle/SQLite3MultipleCiphers) project
@@ -15,7 +15,7 @@ Our SQLiteJDBC library requires no configuration since native libraries for majo
 
 :arrow_right: More usage examples and configuration are available in [USAGE.md](USAGE.md)
 
-SQLite JDBC is a library for accessing SQLite databases through the JDBC API. For the general usage of JDBC, see [JDBC Tutorial](http://docs.oracle.com/javase/tutorial/jdbc/index.html) or [Oracle JDBC Documentation](http://www.oracle.com/technetwork/java/javase/tech/index-jsp-136101.html).
+SQLite JDBC is a library for accessing SQLite databases through the JDBC API. For the general usage of JDBC, see [JDBC Tutorial](https://docs.oracle.com/javase/tutorial/jdbc/index.html) or [Oracle JDBC Documentation](https://www.oracle.com/technetwork/java/javase/tech/index-jsp-136101.html).
 
 1. [Download](#download) `sqlite-jdbc-(VERSION).jar`
 then append this jar file into your classpath.
