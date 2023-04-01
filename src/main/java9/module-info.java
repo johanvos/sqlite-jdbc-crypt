@@ -1,4 +1,4 @@
-module org.xerial.sqlitejdbc {
+module io.github.willena.sqlitejdbc {
 
     requires transitive java.sql;
     requires transitive java.sql.rowset;
@@ -10,6 +10,7 @@ module org.xerial.sqlitejdbc {
     exports org.sqlite.jdbc3;
     exports org.sqlite.jdbc4;
     exports org.sqlite.util;
+    exports org.sqlite.mc;
 
     provides java.sql.Driver with org.sqlite.JDBC;
 
