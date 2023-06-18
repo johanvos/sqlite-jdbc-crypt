@@ -8,7 +8,7 @@ RESOURCE_DIR = src/main/resources
 all: jni-header package
 
 deploy:
-	mvn package deploy -P release --settings settings.xml
+	mvn deploy -P release --settings settings.xml
 
 DOCKER_RUN_OPTS=--rm
 MVN:=mvn
