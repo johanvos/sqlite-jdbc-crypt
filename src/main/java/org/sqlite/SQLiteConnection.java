@@ -17,6 +17,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Executor;
 import org.sqlite.SQLiteConfig.TransactionMode;
 import org.sqlite.core.CoreDatabaseMetaData;
@@ -307,7 +308,7 @@ public abstract class SQLiteConnection implements Connection {
         }
 
         String tempFolder = new File(System.getProperty("java.io.tmpdir")).getAbsolutePath();
-        String dbFileName = String.format("sqlite-jdbc-tmp-%d.db", resourceAddr.hashCode());
+        String dbFileName = String.format("sqlite-jdbc-tmp-%s.db", UUID.randomUUID());
         File dbFile = new File(tempFolder, dbFileName);
 
         if (dbFile.exists()) {

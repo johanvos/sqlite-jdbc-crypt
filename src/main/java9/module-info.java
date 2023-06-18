@@ -2,6 +2,7 @@ module io.github.willena.sqlitejdbc {
 
     requires transitive java.sql;
     requires transitive java.sql.rowset;
+    requires static org.graalvm.sdk;
 
     exports org.sqlite;
     exports org.sqlite.core;
