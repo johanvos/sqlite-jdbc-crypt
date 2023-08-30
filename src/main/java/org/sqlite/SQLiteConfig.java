@@ -239,9 +239,11 @@ public class SQLiteConfig {
         orderedPragmaTable.add(Pragma.PAGE_SIZE.getPragmaName());
         orderedPragmaTable.add(Pragma.AUTO_VACUUM.getPragmaName());
         orderedPragmaTable.add(Pragma.ENCODING.getPragmaName());
-        pragmaTable.keySet().stream()
-                .filter(item -> !orderedPragmaTable.contains(item))
-                .forEach(orderedPragmaTable::add);
+        for (Object item : pragmaTable.keySet()) {
+            if (!orderedPragmaTable.contains(item)) {
+                orderedPragmaTable.add(item);
+            }
+        }
         try (Statement stat = conn.createStatement()) {
             for (Object each : orderedPragmaTable) {
                 String key = each.toString();
