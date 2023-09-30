@@ -186,6 +186,9 @@ public class SQLiteMCConfig extends SQLiteConfig {
         }
 
         public Builder setLegacyPageSize(int value) {
+            if (value < 0 || value > 65536 || (value & (value - 1)) != 0){
+                throw new IllegalArgumentException("legacy_page_size must be a power of 2 between 0 and 65536");
+            }
             setPragma(Pragma.LEGACY_PAGE_SIZE, String.valueOf(value));
             return this;
         }
