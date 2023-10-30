@@ -27,7 +27,7 @@ endif
 
 SQLITE_INCLUDE := $(shell dirname "$(SQLITE_HEADER)")
 
-CCFLAGS:= -I$(SQLITE_OUT) -I$(SQLITE_INCLUDE) $(CCFLAGS)
+CCFLAGS:= -I$(SQLITE_OUT) -I$(SQLITE_INCLUDE) $(CCFLAGS) -DSQLITE_HAS_CODEC
 
 BUILDER_UID:="$(shell id -u )"
 BUILDER_GID:="$(shell id -g )"
